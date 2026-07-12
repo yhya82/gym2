@@ -30,6 +30,18 @@ class MembershipRenewalService
         User $staff,
     ): Subscription {
         return DB::transaction(function () use ($member, $plan, $startDate, $paymentAmount, $staff) {
+            // A member's current period ends the moment they renew, so any
+            // subscription still marked active is superseded now — not left
+            // to linger until its own expiry_date passes. Without this, a
+            // member could end up with two "active" subscriptions at once
+            // (the stale one and the new one), which would break the expiry
+            // cron's simple status='active' AND expiry_date < today scan: it
+            // has no way to tell a superseded-by-renewal row from a
+            // genuinely-overdue one.
+            $member->subscriptions()
+                ->where('status', MembershipStatus::Active)
+                ->update(['status' => MembershipStatus::Expired]);
+
             $expiryDate = Carbon::instance($startDate)->addDays($plan->duration_days);
 
             $subscription = $member->subscriptions()->create([

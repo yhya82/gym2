@@ -14,11 +14,18 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('email')->unique();
+            $table->string('email');
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->enum('role', ['admin', 'receptionist']);
+            $table->string('profile_image')->nullable();
             $table->rememberToken();
+            $table->softDeletes();
             $table->timestamps();
+
+            $table->string('email_active', 255)->nullable()
+                ->virtualAs('IF(`deleted_at` IS NULL, `email`, NULL)');
+            $table->unique('email_active');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\MembershipStatus;
+use App\Events\MemberRegistered;
 use App\Models\Member;
 use App\Models\Plan;
 use App\Models\User;
@@ -57,7 +58,14 @@ class MemberRegistrationService
 
             $this->payments->record($subscription, $paymentAmount, $staff, $startDate);
 
-            return $member->fresh(['subscriptions', 'payments']);
+            $member = $member->fresh(['subscriptions', 'payments']);
+
+            // afterCommit() guarantees this only fires once the *outermost*
+            // transaction commits, correct whether register() is called
+            // top-level or nested inside a larger transaction later.
+            DB::afterCommit(fn () => MemberRegistered::dispatch($member));
+
+            return $member;
         });
     }
 }

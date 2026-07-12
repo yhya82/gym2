@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use App\Enums\Theme;
+use App\Observers\ApplicationSettingObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
+#[ObservedBy([ApplicationSettingObserver::class])]
 class ApplicationSetting extends Model
 {
     protected $table = 'application_settings';

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\MembershipStatus;
+use App\Events\MembershipRenewed;
 use App\Models\Member;
 use App\Models\Plan;
 use App\Models\Subscription;
@@ -14,6 +15,7 @@ class MembershipRenewalService
 {
     public function __construct(
         private readonly PaymentService $payments,
+        private readonly AuditLogger $audit,
     ) {}
 
     /**
@@ -56,9 +58,26 @@ class MembershipRenewalService
 
             $this->payments->record($subscription, $paymentAmount, $staff, $startDate);
 
-            $member->update(['status' => MembershipStatus::Active]);
+            // Suppressed here and logged explicitly below instead: a blind
+            // Member "updated" observer can't tell this status flip apart
+            // from a genuine profile edit (MemberObserver relies on exactly
+            // this call being wrapped in withoutEvents()).
+            Member::withoutEvents(fn () => $member->update(['status' => MembershipStatus::Active]));
 
-            return $subscription->fresh(['payments', 'plan']);
+            $subscription = $subscription->fresh(['payments', 'plan', 'member']);
+
+            $this->audit->log(
+                'renew',
+                'members',
+                "Renewed \"{$member->full_name}\" on {$plan->plan_name} membership until {$subscription->expiry_date->toDateString()}."
+            );
+
+            // afterCommit() guarantees this only fires once the *outermost*
+            // transaction commits, correct whether renew() is called
+            // top-level or nested inside a larger transaction later.
+            DB::afterCommit(fn () => MembershipRenewed::dispatch($subscription->member, $subscription));
+
+            return $subscription;
         });
     }
 }

@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Enums\MembershipStatus;
 use App\Events\MembershipExpired;
+use App\Models\Member;
 use App\Models\Subscription;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -46,10 +47,22 @@ class ExpireMemberships extends Command
                 foreach ($subscriptions as $subscription) {
                     DB::transaction(function () use ($subscription) {
                         $subscription->update(['status' => MembershipStatus::Expired]);
-                        $subscription->member->update(['status' => MembershipStatus::Expired]);
+
+                        // Suppressed: "membership expired" isn't in §19.1's
+                        // list of actions that must be audit-logged, and this
+                        // status flip shouldn't be misread by MemberObserver
+                        // as a generic edit if this command is ever triggered
+                        // under an authenticated context in the future (e.g.
+                        // an admin "run expiry now" action).
+                        Member::withoutEvents(
+                            fn () => $subscription->member->update(['status' => MembershipStatus::Expired])
+                        );
+
+                        // afterCommit() guarantees this fires only once this
+                        // subscription's transaction actually commits.
+                        DB::afterCommit(fn () => MembershipExpired::dispatch($subscription->member));
                     });
 
-                    MembershipExpired::dispatch($subscription->member);
                     $expiredCount++;
                 }
             });

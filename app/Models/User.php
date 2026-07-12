@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\UserRole;
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -78,5 +79,20 @@ class User extends Authenticatable
     public function auditLogs(): HasMany
     {
         return $this->hasMany(AuditLog::class);
+    }
+
+    /**
+     * §14 — Users search by name or email.
+     */
+    public function scopeSearch(Builder $query, ?string $term): Builder
+    {
+        if (! $term) {
+            return $query;
+        }
+
+        return $query->where(function (Builder $q) use ($term) {
+            $q->where('name', 'like', "%{$term}%")
+                ->orWhere('email', 'like', "%{$term}%");
+        });
     }
 }

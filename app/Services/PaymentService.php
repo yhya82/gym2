@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\PaymentRecorded;
 use App\Exceptions\PaymentExceedsBalanceException;
 use App\Models\Payment;
 use App\Models\Subscription;
@@ -73,6 +74,13 @@ class PaymentService
                 'amount_paid' => $projectedTotal,
                 'balance' => bcsub($locked->plan_price, $projectedTotal, 2),
             ]);
+
+            // record() is sometimes called nested inside a larger transaction
+            // (member registration, renewal) via a savepoint, not a real
+            // commit — afterCommit() correctly defers until the *outermost*
+            // transaction commits either way, whereas dispatching right here
+            // would fire even if that outer transaction later rolled back.
+            DB::afterCommit(fn () => PaymentRecorded::dispatch($payment));
 
             return $payment;
         });

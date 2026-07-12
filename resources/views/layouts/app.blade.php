@@ -1,36 +1,51 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+        <title>{{ \App\Models\ApplicationSetting::current()->application_name }}</title>
 
-        <!-- Fonts -->
+        <!-- Applied before first paint so there's no flash of the wrong theme.
+             Preference is saved in localStorage — a per-device choice rather
+             than a per-account one, which fits a shared reception desk. -->
+        <script>
+            (function () {
+                const stored = localStorage.getItem('theme');
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (stored === 'dark' || (! stored && prefersDark)) {
+                    document.documentElement.classList.add('dark');
+                }
+            })();
+        </script>
+
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
-        <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-100">
-            <livewire:layout.navigation />
+    <body class="h-full font-sans antialiased bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+        <div class="flex h-full">
+            @include('layouts.sidebar')
 
-            <!-- Page Heading -->
-            @if (isset($header))
-                <header class="bg-white shadow">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                        {{ $header }}
+            <div class="flex-1 flex flex-col min-w-0 pt-16 lg:pt-0">
+                @include('layouts.topnav')
+
+                <main class="flex-1 overflow-y-auto">
+                    @if (session('status'))
+                        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+                            <div class="rounded-md bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 px-4 py-3 text-sm text-green-800 dark:text-green-300">
+                                {{ session('status') }}
+                            </div>
+                        </div>
+                    @endif
+
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        {{ $slot }}
                     </div>
-                </header>
-            @endif
-
-            <!-- Page Content -->
-            <main>
-                {{ $slot }}
-            </main>
+                </main>
+            </div>
         </div>
     </body>
 </html>

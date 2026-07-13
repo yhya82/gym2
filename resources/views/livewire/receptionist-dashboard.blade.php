@@ -5,9 +5,9 @@
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <x-stat-card label="{{ __('Total Members') }}" value="{{ $stats['total_members'] ?? 0 }}" />
-        <x-stat-card label="{{ __('Active Members') }}" value="{{ $stats['active_members'] ?? 0 }}" />
-        <x-stat-card label="{{ __('Expired Members') }}" value="{{ $stats['expired_members'] ?? 0 }}" />
+        <x-stat-card icon="members" label="{{ __('Total Members') }}" value="{{ $stats['total_members'] ?? 0 }}" />
+        <x-stat-card icon="check-circle" accent="green" label="{{ __('Active Members') }}" value="{{ $stats['active_members'] ?? 0 }}" />
+        <x-stat-card icon="x-circle" accent="red" label="{{ __('Expired Members') }}" value="{{ $stats['expired_members'] ?? 0 }}" />
     </div>
 
     <div>

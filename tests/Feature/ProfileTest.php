@@ -79,7 +79,11 @@ class ProfileTest extends TestCase
             ->assertRedirect('/');
 
         $this->assertGuest();
-        $this->assertNull($user->fresh());
+        // User uses SoftDeletes (a deliberate schema decision — see
+        // database schema notes), so the row still exists; fresh() also
+        // bypasses scopes by design (it must find trashed records too),
+        // so the meaningful assertion here is trashed(), not a null check.
+        $this->assertTrue($user->fresh()->trashed());
     }
 
     public function test_correct_password_must_be_provided_to_delete_account(): void

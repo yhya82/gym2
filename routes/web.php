@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PlanController;
@@ -10,9 +11,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'welcome');
+// The real /login route is Volt::route('login', 'pages.auth.login') in
+// routes/auth.php — a Volt single-file component needs that registration to
+// compile/mount correctly; Route::view() can't render it and would also
+// shadow the named "login" route other parts of the app depend on.
+Route::redirect('/', '/login');
 
 Route::view('dashboard', 'dashboard')
+
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
@@ -51,6 +57,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('users', UserController::class)->except(['create', 'edit', 'show']);
         Route::get('settings', [SettingController::class, 'show'])->name('settings.show');
         Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
+        Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
     });
 });
 

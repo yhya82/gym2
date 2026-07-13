@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\PaymentExceedsBalanceException;
+use App\Exceptions\SubscriptionNotActiveException;
 use App\Http\Requests\StorePaymentRequest;
 use App\Models\Payment;
 use App\Models\Subscription;
@@ -48,7 +49,7 @@ class PaymentController extends Controller
                 Auth::user(),
                 Request::date('payment_date'),
             );
-        } catch (PaymentExceedsBalanceException $e) {
+        } catch (PaymentExceedsBalanceException|SubscriptionNotActiveException $e) {
             throw ValidationException::withMessages(['amount' => $e->getMessage()]);
         }
 

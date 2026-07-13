@@ -62,24 +62,21 @@ class AuthenticationTest extends TestCase
 
         $response = $this->get('/dashboard');
 
+        // The app uses a custom sidebar/topnav layout (layouts/sidebar.blade.php,
+        // layouts/topnav.blade.php), not Breeze's default Volt navigation
+        // component — assert on the actual logout form the topnav renders.
         $response
             ->assertOk()
-            ->assertSeeVolt('layout.navigation');
+            ->assertSee(route('logout'), false);
     }
 
     public function test_users_can_logout(): void
     {
         $user = User::factory()->create();
 
-        $this->actingAs($user);
+        $response = $this->actingAs($user)->post('/logout');
 
-        $component = Volt::test('layout.navigation');
-
-        $component->call('logout');
-
-        $component
-            ->assertHasNoErrors()
-            ->assertRedirect('/');
+        $response->assertRedirect('/');
 
         $this->assertGuest();
     }

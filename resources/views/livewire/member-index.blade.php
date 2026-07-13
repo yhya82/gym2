@@ -1,4 +1,7 @@
-@php $isAdmin = auth()->user()->role === \App\Enums\UserRole::Admin; @endphp
+@php
+    $isAdmin = auth()->user()->role === \App\Enums\UserRole::Admin;
+    $currency = \App\Models\ApplicationSetting::current()->currency;
+@endphp
 
 <div class="space-y-4">
     <div class="flex flex-wrap items-center justify-between gap-3">
@@ -33,6 +36,8 @@
                     <th class="px-4 py-3">{{ __('Name') }}</th>
                     <th class="px-4 py-3">{{ __('Phone') }}</th>
                     <th class="px-4 py-3">{{ __('Plan') }}</th>
+                    <th class="px-4 py-3">{{ __('Plan Price') }}</th>
+                    <th class="px-4 py-3">{{ __('Amount Paid') }}</th>
                     <th class="px-4 py-3">{{ __('Status') }}</th>
                     <th class="px-4 py-3">{{ __('Expiry') }}</th>
                     <th class="px-4 py-3 text-right">{{ __('Actions') }}</th>
@@ -48,6 +53,12 @@
                         </td>
                         <td class="px-4 py-3 text-gray-500 dark:text-gray-400">{{ $member->phone_number }}</td>
                         <td class="px-4 py-3 text-gray-500 dark:text-gray-400">{{ $member->currentSubscription?->plan?->plan_name ?? '—' }}</td>
+                        <td class="px-4 py-3 text-gray-500 dark:text-gray-400 tabular-nums">
+                            {{ $member->currentSubscription ? $currency.' '.number_format($member->currentSubscription->plan_price, 2) : '—' }}
+                        </td>
+                        <td class="px-4 py-3 text-gray-500 dark:text-gray-400 tabular-nums">
+                            {{ $member->currentSubscription ? $currency.' '.number_format($member->currentSubscription->amount_paid, 2) : '—' }}
+                        </td>
                         <td class="px-4 py-3">
                             @if ($member->trashed())
                                 <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">{{ __('Archived') }}</span>
@@ -78,7 +89,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-4 py-10 text-center text-gray-400 dark:text-gray-500">
+                        <td colspan="8" class="px-4 py-10 text-center text-gray-400 dark:text-gray-500">
                             {{ __('No members found.') }}
                             @if (! $search && $status === 'all')
                                 <br>{{ __('Create your first member to get started.') }}

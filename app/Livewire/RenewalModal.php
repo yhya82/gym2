@@ -39,7 +39,8 @@ class RenewalModal extends Component
         $this->plan_id = null;
         $this->start_date = now()->toDateString();
         $this->payment_amount = '';
-        $this->dispatch('open-modal', name: 'renewal-modal');
+        // Positional arg, not named — see MemberForm::loadForEdit() for why.
+        $this->dispatch('open-modal', 'renewal-modal');
     }
 
     public function getSelectedPlanProperty(): ?Plan
@@ -88,7 +89,7 @@ class RenewalModal extends Component
             return;
         }
 
-        $this->dispatch('close-modal', name: 'renewal-modal');
+        $this->dispatch('close-modal', 'renewal-modal');
         $this->dispatch('member-renewed');
     }
 

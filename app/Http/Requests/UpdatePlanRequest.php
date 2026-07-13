@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdatePlanRequest extends FormRequest
 {
@@ -22,7 +23,10 @@ class UpdatePlanRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'plan_name' => ['required', 'string', 'max:100'],
+            'plan_name' => [
+                'required', 'string', 'max:100',
+                Rule::unique('plans', 'plan_name')->whereNull('deleted_at')->ignore($this->route('plan')),
+            ],
             'duration_days' => ['required', 'integer', 'min:1'],
             'price' => ['required', 'numeric', 'min:0'],
         ];

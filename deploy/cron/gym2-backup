@@ -1,0 +1,7 @@
+# Nightly database + uploaded-files backup (see deploy/backup/backup-database.sh
+# and docs/BACKUP_RESTORE.md). Runs after the expiry job (gym2-schedule) so a
+# backup always reflects the day's expiry transitions.
+# Install with: crontab -l | { cat; cat deploy/cron/gym2-backup; } | crontab -
+# Replace /var/www/gym2 and www-data with the actual deployment path/user.
+
+30 0 * * * www-data /var/www/gym2/deploy/backup/backup-database.sh /var/backups/gym2/database 14 >> /var/www/gym2/storage/logs/backup.log 2>&1

@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Exceptions\PaymentExceedsBalanceException;
+use App\Exceptions\SubscriptionNotActiveException;
 use App\Models\Member;
 use App\Models\Payment;
 use App\Models\Subscription;
@@ -48,7 +49,7 @@ class PaymentForm extends Component
 
         try {
             $payments->record($subscription, (string) $this->amount, auth()->user());
-        } catch (PaymentExceedsBalanceException $e) {
+        } catch (PaymentExceedsBalanceException|SubscriptionNotActiveException $e) {
             $this->addError('amount', $e->getMessage());
 
             return;

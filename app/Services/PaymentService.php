@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Enums\MembershipStatus;
 use App\Events\PaymentRecorded;
 use App\Exceptions\PaymentExceedsBalanceException;
+use App\Exceptions\SubscriptionNotActiveException;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Models\User;
@@ -29,6 +31,12 @@ class PaymentService
      *                                         amount_paid past plan_price,
      *                                         whether caught here or by the
      *                                         trigger.
+     * @throws SubscriptionNotActiveException if the subscription's period
+     *                                         has already ended — a top-up
+     *                                         belongs to the current period
+     *                                         only; a lapsed member must be
+     *                                         renewed instead (creates its
+     *                                         own new, active subscription).
      */
     public function record(
         Subscription $subscription,
@@ -42,6 +50,12 @@ class PaymentService
 
         return DB::transaction(function () use ($subscription, $amount, $staff, $paymentDate) {
             $locked = Subscription::query()->lockForUpdate()->findOrFail($subscription->id);
+
+            if ($locked->status !== MembershipStatus::Active) {
+                throw new SubscriptionNotActiveException(
+                    'This subscription has expired — renew the membership instead of recording a payment against it.'
+                );
+            }
 
             $projectedTotal = bcadd($locked->amount_paid, $amount, 2);
 

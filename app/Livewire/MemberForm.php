@@ -9,6 +9,7 @@ use App\Models\Plan;
 use App\Services\MemberRegistrationService;
 use App\Services\PhoneNumberService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\On;
@@ -59,7 +60,11 @@ class MemberForm extends Component
         $this->memberId = $member->id;
         $this->full_name = $member->full_name;
         $this->phone_number = $member->phone_number;
-        $this->dispatch('open-modal', name: 'member-form-modal');
+        // Positional arg, not named: x-modal compares $event.detail directly
+        // against the modal name string (see resources/views/components/
+        // modal.blade.php) — a named arg would serialize the detail as
+        // {name: '...'}, which never equals that bare string.
+        $this->dispatch('open-modal', 'member-form-modal');
     }
 
     public function save(MemberRegistrationService $registration, PhoneNumberService $phoneNumbers): void
@@ -92,9 +97,13 @@ class MemberForm extends Component
             $this->addError('phone_number', $e->getMessage());
 
             return;
+        } catch (UniqueConstraintViolationException) {
+            $this->addError('phone_number', 'This phone number is already registered to another member.');
+
+            return;
         }
 
-        $this->dispatch('close-modal', name: 'member-form-modal');
+        $this->dispatch('close-modal', 'member-form-modal');
         $this->dispatch('member-saved');
     }
 
@@ -127,6 +136,10 @@ class MemberForm extends Component
             return;
         } catch (PaymentExceedsBalanceException $e) {
             $this->addError('payment_amount', $e->getMessage());
+
+            return;
+        } catch (UniqueConstraintViolationException) {
+            $this->addError('phone_number', 'This phone number is already registered to another member.');
 
             return;
         }

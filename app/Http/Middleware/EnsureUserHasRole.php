@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -18,6 +19,12 @@ class EnsureUserHasRole
      * Accepts multiple roles (role:admin,receptionist) for routes shared by
      * more than one role but still closed to guests.
      *
+     * Throws AuthorizationException (not abort(403) directly) so this denial
+     * is caught by the same reportable() hook in bootstrap/app.php that logs
+     * every other permission denial — one exception type, one log path,
+     * regardless of whether the denial came from a Policy or this
+     * route-group-level check.
+     *
      * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next, string ...$roles): Response
@@ -25,7 +32,7 @@ class EnsureUserHasRole
         $user = $request->user();
 
         if (! $user || ! in_array($user->role->value, $roles, true)) {
-            abort(403);
+            throw new AuthorizationException('This action is unauthorized.');
         }
 
         return $next($request);

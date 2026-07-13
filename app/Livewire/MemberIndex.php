@@ -65,6 +65,7 @@ class MemberIndex extends Component
     public function getMembersProperty(): LengthAwarePaginator
     {
         return Member::query()
+            ->with('currentSubscription.plan')
             ->search($this->search)
             ->when($this->status === 'active', fn ($q) => $q->active())
             ->when($this->status === 'expired', fn ($q) => $q->expired())

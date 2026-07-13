@@ -20,6 +20,13 @@
 
 <x-app-layout>
     <div class="space-y-6">
+        <a href="{{ route('members.index') }}" wire:navigate class="inline-flex items-center gap-1 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            {{ __('Back to Members') }}
+        </a>
+
         <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
                 <div class="flex items-center gap-3">

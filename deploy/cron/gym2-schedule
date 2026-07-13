@@ -1,0 +1,5 @@
+# Drives Schedule::command('memberships:expire') (routes/console.php).
+# Install with: crontab -l | { cat; cat deploy/cron/gym2-schedule; } | crontab -
+# Replace /var/www/gym2 and www-data with the actual deployment path/user.
+
+* * * * * www-data cd /var/www/gym2 && php artisan schedule:run >> /dev/null 2>&1

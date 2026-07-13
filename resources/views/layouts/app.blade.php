@@ -9,12 +9,22 @@
 
         <!-- Applied before first paint so there's no flash of the wrong theme.
              Preference is saved in localStorage — a per-device choice rather
-             than a per-account one, which fits a shared reception desk. -->
+             than a per-account one, which fits a shared reception desk. A
+             device with no stored choice yet falls back to the org-wide
+             Settings > Default Theme, ahead of the OS preference, since a
+             shared front-desk terminal should open in whatever look the
+             gym configured rather than whatever the OS happens to prefer. -->
         <script>
+            // Read by resources/js/app.js too, so the same fallback chain
+            // (stored > org default > OS preference) applies consistently
+            // after wire:navigate soft-navigations, not just this hard load.
+            window.__defaultTheme = @json(\App\Models\ApplicationSetting::current()->default_theme->value);
+
             (function () {
                 const stored = localStorage.getItem('theme');
                 const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                if (stored === 'dark' || (! stored && prefersDark)) {
+                const dark = stored ? stored === 'dark' : (window.__defaultTheme === 'dark' || (! window.__defaultTheme && prefersDark));
+                if (dark) {
                     document.documentElement.classList.add('dark');
                 }
             })();

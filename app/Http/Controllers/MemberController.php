@@ -10,6 +10,7 @@ use App\Models\Member;
 use App\Models\Plan;
 use App\Services\MemberRegistrationService;
 use App\Services\PhoneNumberService;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request as RequestFacade;
@@ -54,6 +55,12 @@ class MemberController extends Controller
             throw ValidationException::withMessages(['phone_number' => $e->getMessage()]);
         } catch (PaymentExceedsBalanceException $e) {
             throw ValidationException::withMessages(['payment_amount' => $e->getMessage()]);
+        } catch (UniqueConstraintViolationException) {
+            // Canonicalization only happens inside the service, so this can't
+            // be pre-validated with a Rule::unique against the raw input —
+            // the members_phone_active_unique index is the first point a
+            // duplicate (post-canonicalization) can actually be detected.
+            throw ValidationException::withMessages(['phone_number' => 'This phone number is already registered to another member.']);
         }
 
         return redirect()->route('members.show', $member)->with('status', 'Member created successfully.');
@@ -77,6 +84,8 @@ class MemberController extends Controller
             ]);
         } catch (InvalidPhoneNumberException $e) {
             throw ValidationException::withMessages(['phone_number' => $e->getMessage()]);
+        } catch (UniqueConstraintViolationException) {
+            throw ValidationException::withMessages(['phone_number' => 'This phone number is already registered to another member.']);
         }
 
         return redirect()->route('members.show', $member)->with('status', 'Member information saved.');

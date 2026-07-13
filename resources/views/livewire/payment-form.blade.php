@@ -9,7 +9,9 @@
             <span class="font-semibold text-gray-800 dark:text-gray-100 tabular-nums">{{ $currency }} {{ number_format($this->subscription->balance, 2) }}</span>
         </p>
 
-        @if ((float) $this->subscription->balance > 0)
+        @if ($this->subscription->status !== \App\Enums\MembershipStatus::Active)
+            <p class="text-sm text-amber-600 dark:text-amber-400">{{ __('This membership has expired — renew it instead of recording a payment.') }}</p>
+        @elseif ((float) $this->subscription->balance > 0)
             <form wire:submit="record" class="flex items-end gap-3">
                 <div class="flex-1">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Amount') }}</label>

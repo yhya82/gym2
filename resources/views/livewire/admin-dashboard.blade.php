@@ -16,7 +16,15 @@
     </div>
 
     <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5">
-        <h2 class="text-sm font-medium text-gray-700 dark:text-gray-200 mb-4">{{ __('Monthly Revenue') }}</h2>
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Monthly Revenue') }}</h2>
+
+            <select wire:model.live="revenueRange" class="rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <option value="3">{{ __('Last 3 Months') }}</option>
+                <option value="6">{{ __('Last 6 Months') }}</option>
+                <option value="12">{{ __('Last 12 Months') }}</option>
+            </select>
+        </div>
 
         <div wire:ignore
             x-data="revenueChart(@js(array_keys($monthlyRevenue)), @js(array_values($monthlyRevenue)))"

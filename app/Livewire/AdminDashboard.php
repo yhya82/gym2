@@ -9,14 +9,32 @@ use Livewire\Component;
 
 class AdminDashboard extends Component
 {
+    /**
+     * Months of history the revenue chart shows, keyed to the option values
+     * in the view's <select> — a preset list rather than a free date range,
+     * since the chart's own granularity is monthly.
+     */
+    private const REVENUE_RANGES = [
+        '3' => 2,
+        '6' => 5,
+        '12' => 11,
+    ];
+
     public array $stats = [];
 
     public array $monthlyRevenue = [];
+
+    public string $revenueRange = '6';
 
     public function mount(): void
     {
         $this->refreshMemberStats();
         $this->refreshRevenueStats();
+    }
+
+    public function updatedRevenueRange(): void
+    {
+        $this->refreshMonthlyRevenueSeries();
     }
 
     /**
@@ -66,21 +84,26 @@ class AdminDashboard extends Component
     }
 
     /**
-     * Last 6 months of revenue, for the Monthly Revenue Chart (§9.2).
+     * Revenue by month, for the Monthly Revenue Chart (§9.2) — the window
+     * defaults to 6 months back but is scoped by $revenueRange.
      */
     private function refreshMonthlyRevenueSeries(): void
     {
+        $monthsBack = self::REVENUE_RANGES[$this->revenueRange] ?? self::REVENUE_RANGES['6'];
+
         $rows = Payment::query()
             ->selectRaw("DATE_FORMAT(payment_date, '%Y-%m') as ym, SUM(amount) as total")
-            ->where('payment_date', '>=', now()->subMonths(5)->startOfMonth())
+            ->where('payment_date', '>=', now()->subMonths($monthsBack)->startOfMonth())
             ->groupBy('ym')
             ->orderBy('ym')
             ->pluck('total', 'ym');
 
         $series = [];
-        for ($i = 5; $i >= 0; $i--) {
+        for ($i = $monthsBack; $i >= 0; $i--) {
             $month = now()->subMonths($i);
             $key = $month->format('Y-m');
+            // A rolling window of at most 12 months never repeats a calendar
+            // month, so "M" alone (no year) is unambiguous at every range.
             $series[$month->format('M')] = (float) ($rows[$key] ?? 0);
         }
 

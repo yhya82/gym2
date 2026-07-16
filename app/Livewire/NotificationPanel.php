@@ -27,14 +27,29 @@ class NotificationPanel extends Component
         ];
     }
 
+    /**
+     * Only unread notifications — marking one read (markAsRead) is meant to
+     * remove it from this list, not just re-style it in place, so the query
+     * itself is the mechanism rather than client-side hide/show state.
+     */
     public function getNotificationsProperty(): Collection
     {
-        return auth()->user()->appNotifications()->latest()->limit(10)->get();
+        return auth()->user()->appNotifications()->where('read_status', false)->latest()->limit(10)->get();
     }
 
     public function getUnreadCountProperty(): int
     {
         return auth()->user()->appNotifications()->where('read_status', false)->count();
+    }
+
+    /**
+     * Scoped through the authenticated user's own appNotifications(), not a
+     * bare Notification::find() — otherwise one user could mark (and thus
+     * dismiss) another user's notification just by guessing its id.
+     */
+    public function markAsRead(int $notificationId): void
+    {
+        auth()->user()->appNotifications()->whereKey($notificationId)->update(['read_status' => true]);
     }
 
     public function markAllRead(): void

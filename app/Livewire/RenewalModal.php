@@ -36,7 +36,17 @@ class RenewalModal extends Component
         $this->memberId = $member->id;
         $this->memberName = $member->full_name;
         $this->memberStatus = $member->status->value;
-        $this->plan_id = null;
+
+        // Prefill with the plan they're already on — most renewals keep the
+        // same plan, so this saves staff a redundant re-selection. Only
+        // prefills if that plan is still active; an archived plan isn't in
+        // the dropdown at all (getPlansProperty), so carrying its id over
+        // would leave the select showing nothing chosen anyway.
+        $previousPlanId = $member->currentSubscription?->plan_id;
+        $this->plan_id = $previousPlanId && Plan::query()->whereKey($previousPlanId)->exists()
+            ? $previousPlanId
+            : null;
+
         $this->start_date = now()->toDateString();
         $this->payment_amount = '';
         // Positional arg, not named — see MemberForm::loadForEdit() for why.

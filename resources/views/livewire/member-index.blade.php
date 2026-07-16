@@ -39,6 +39,7 @@
                     <th class="px-4 py-3">{{ __('Plan Price') }}</th>
                     <th class="px-4 py-3">{{ __('Amount Paid') }}</th>
                     <th class="px-4 py-3">{{ __('Status') }}</th>
+                    <th class="px-4 py-3">{{ __('Start Date') }}</th>
                     <th class="px-4 py-3">{{ __('Expiry') }}</th>
                     <th class="px-4 py-3 text-right">{{ __('Actions') }}</th>
                 </tr>
@@ -68,6 +69,7 @@
                                 <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-400">{{ __('Expired') }}</span>
                             @endif
                         </td>
+                        <td class="px-4 py-3 text-gray-500 dark:text-gray-400">{{ $member->currentSubscription?->start_date?->format('M j, Y') ?? '—' }}</td>
                         <td class="px-4 py-3 text-gray-500 dark:text-gray-400">{{ $member->currentSubscription?->expiry_date?->format('M j, Y') ?? '—' }}</td>
                         <td class="px-4 py-3">
                             <div class="flex justify-end gap-2 text-xs font-medium">
@@ -89,7 +91,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="px-4 py-10 text-center text-gray-400 dark:text-gray-500">
+                        <td colspan="9" class="px-4 py-10 text-center text-gray-400 dark:text-gray-500">
                             {{ __('No members found.') }}
                             @if (! $search && $status === 'all')
                                 <br>{{ __('Create your first member to get started.') }}

@@ -22,9 +22,10 @@
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Logo') }}</label>
                 <div class="mt-2 flex items-center gap-4">
                     @if ($logoUpload && $logoUpload->isPreviewable())
-                        <img src="{{ $logoUpload->temporaryUrl() }}" alt="" class="h-12 w-12 rounded-md object-cover border border-gray-200 dark:border-gray-600">
+                        <img src="{{ $logoUpload->temporaryUrl() }}"  alt="Logo" class="h-12 w-12 rounded-md object-cover border border-gray-200 dark:border-gray-600">
                     @elseif ($logo)
-                        <img src="{{ \Illuminate\Support\Facades\Storage::url($logo) }}" alt="" class="h-12 w-12 rounded-md object-cover border border-gray-200 dark:border-gray-600">
+                        <img
+                                src="{{ \Illuminate\Support\Facades\Storage::disk('s3')->temporaryUrl($logo, now()->addMinutes(10)) }}" alt="Logo" class="h-12 w-12 rounded-md object-cover border border-gray-200 dark:border-gray-600">
                     @else
                         <div class="h-12 w-12 rounded-md border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center text-xs text-gray-400 dark:text-gray-500">{{ __('None') }}</div>
                     @endif

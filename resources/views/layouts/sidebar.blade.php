@@ -31,12 +31,16 @@ $isAdmin = auth()->user()->role === \App\Enums\UserRole::Admin;
         class="fixed lg:static inset-y-0 left-0 z-50 w-64 h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-transform duration-200 ease-in-out"
     >
         <div class="h-16 shrink-0 flex items-center gap-2 px-6 border-b border-gray-200 dark:border-gray-700">
-            @if ($settings->logo)
-                <img src="{{ \Illuminate\Support\Facades\Storage::url($settings->logo) }}" alt="" class="h-8 w-8 rounded object-cover shrink-0">
+           @if ($settings->logo)
+                <img src="{{ \Illuminate\Support\Facades\Storage::disk('s3')->temporaryUrl($settings->logo, now()->addMinutes(10)) }}"
+                alt=""class="h-8 w-8 rounded object-cover shrink-0">
             @else
-                <x-application-logo class="h-8 w-8 fill-current text-indigo-600" />
+             <x-application-logo class="h-8 w-8 fill-current text-indigo-600" />
             @endif
-            <span class="font-semibold text-gray-800 dark:text-gray-100 truncate">{{ $settings->application_name }}</span>
+
+             <span class="font-semibold text-gray-800 dark:text-gray-100 truncate">
+                {{ $settings->application_name }}
+            </span> 
         </div>
 
         <div class="flex-1 overflow-y-auto py-4 px-3 space-y-1">

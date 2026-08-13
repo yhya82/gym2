@@ -10,4 +10,4 @@ Artisan::command('inspire', function () {
 
 // Expiry is date-granular (Rule: current date > expiry date), so once a day,
 // shortly after midnight, is as precise as the underlying comparison ever is.
-Schedule::command('memberships:expire')->everyMinute();
+Schedule::command('memberships:expire')->everyFiveMinute();

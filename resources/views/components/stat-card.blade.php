@@ -17,6 +17,6 @@ $accentClasses = $accents[$accent] ?? $accents['indigo'];
     @endif
     <div class="min-w-0">
         <p class="text-sm text-gray-500 dark:text-gray-400">{{ $label }}</p>
-        <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100 tabular-nums">{{ $value }}</p>
+        <p class="mt-1 text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100 tabular-nums">{{ $value }}</p>
     </div>
 </div>

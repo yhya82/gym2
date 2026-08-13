@@ -91,7 +91,7 @@ class SettingsPage extends Component
         Gate::authorize('update', $settings);
 
         if ($settings->logo) {
-            Storage::disk('public')->delete($settings->logo);
+            Storage::disk('s3')->delete($settings->logo);
         }
 
         $settings->update(['logo' => null]);

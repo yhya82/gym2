@@ -36,35 +36,53 @@
         @script
         <script>
             Alpine.data('revenueChart', (labels, data) => ({
-                chart: null,
-                init() {
-                    this.chart = new Chart(this.$refs.canvas, {
-                        type: 'line',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                label: 'Revenue',
-                                data: data,
-                                borderColor: 'rgb(79, 70, 229)',
-                                backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                                tension: 0.3,
-                                fill: true,
-                            }],
-                        },
-                        options: {
-                            responsive: true,
-                            plugins: { legend: { display: false } },
-                            scales: { y: { beginAtZero: true } },
-                        },
-                    });
+    chart: null,
 
-                    $wire.$watch('monthlyRevenue', (value) => {
-                        this.chart.data.labels = Object.keys(value);
-                        this.chart.data.datasets[0].data = Object.values(value);
-                        this.chart.update();
-                    });
+    init() {
+        const existingChart = Chart.getChart(this.$refs.canvas);
+
+        if (existingChart) {
+            existingChart.destroy();
+        }
+
+        this.chart = new Chart(this.$refs.canvas, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Revenue',
+                    data: data,
+                    borderColor: 'rgb(79, 70, 229)',
+                    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                    tension: 0.3,
+                    fill: true,
+                }],
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
                 },
-            }));
+                scales: {
+                    y: { beginAtZero: true },
+                },
+            },
+        });
+
+        $wire.$watch('monthlyRevenue', (value) => {
+            this.chart.data.labels = Object.keys(value);
+            this.chart.data.datasets[0].data = Object.values(value);
+            this.chart.update();
+        });
+    },
+
+    destroy() {
+        if (this.chart) {
+            this.chart.destroy();
+            this.chart = null;
+        }
+    },
+}));
         </script>
         @endscript
     </div>

@@ -57,7 +57,7 @@ class AdminDashboard extends Component
     public function onRevenueUpdated(array $event): void
     {
         $this->stats = [...$this->stats, ...$event];
-        $this->refreshMonthlyRevenueSeries();
+       // $this->refreshMonthlyRevenueSeries();
     }
 
     private function refreshMemberStats(): void

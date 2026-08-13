@@ -83,6 +83,13 @@
         }
     },
 }));
+
+     if (window.Echo) {
+        window.Echo.private('dashboard.revenue')
+            .listen('.revenue.updated', (event) => {
+                console.log('🔥 Revenue update received:', event);
+            });
+    }
         </script>
         @endscript
     </div>

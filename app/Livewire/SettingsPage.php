@@ -71,10 +71,10 @@ class SettingsPage extends Component
 
         if ($this->logoUpload) {
             if ($settings->logo) {
-                Storage::disk('public')->delete($settings->logo);
+                Storage::disk('s3')->delete($settings->logo);
             }
 
-            $data['logo'] = $this->logoUpload->store('logos', 'public');
+            $data['logo'] = $this->logoUpload->store('logos', 's3');
         }
 
         $settings->update($data);

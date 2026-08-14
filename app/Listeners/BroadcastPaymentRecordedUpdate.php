@@ -6,6 +6,7 @@ use App\Events\DashboardRevenueUpdated;
 use App\Events\PaymentRecorded;
 use App\Models\Payment;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Cache;
 
 class BroadcastPaymentRecordedUpdate implements ShouldQueue
 {
@@ -15,7 +16,11 @@ class BroadcastPaymentRecordedUpdate implements ShouldQueue
      */
     public function handle(PaymentRecorded $event): void
     {
-        $today = now()->toDateString();
+         Cache::forget('dashboard.total_revenue');
+         Cache::forget('dashboard.monthly_revenue');
+         Cache::forget('dashboard.daily_revenue');
+         
+         $today = now()->toDateString();
 
         DashboardRevenueUpdated::dispatch([
             'total_revenue' => (string) Payment::sum('amount'),

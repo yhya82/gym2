@@ -10,6 +10,7 @@ use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class MembershipRenewalService
 {
@@ -40,9 +41,14 @@ class MembershipRenewalService
             // cron's simple status='active' AND expiry_date < today scan: it
             // has no way to tell a superseded-by-renewal row from a
             // genuinely-overdue one.
-            $member->subscriptions()
-                ->where('status', MembershipStatus::Active)
-                ->update(['status' => MembershipStatus::Expired]);
+
+            if($member->status === MembershipStatus::Active){
+                throw ValidationException::withMessages([
+                    'member' => ['Cannot renew an active member']
+                ]);
+            }
+
+            
 
             $expiryDate = Carbon::instance($startDate)->addDays($plan->duration_days);
 

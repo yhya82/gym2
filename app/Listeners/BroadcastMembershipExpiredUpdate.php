@@ -9,6 +9,7 @@ use App\Events\UserNotified;
 use App\Listeners\Concerns\NotifiesAdmins;
 use App\Models\Member;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Cache;
 
 class BroadcastMembershipExpiredUpdate implements ShouldQueue
 {
@@ -16,6 +17,10 @@ class BroadcastMembershipExpiredUpdate implements ShouldQueue
 
     public function handle(MembershipExpired $event): void
     {
+        Cache::forget('dashboard.total_members');
+        Cache::forget('dashboard.active_members');
+        Cache::forget('dashboard.expired_members');
+        
         DashboardStatsUpdated::dispatch([
             'expired_members' => Member::expired()->count(),
         ]);

@@ -6,6 +6,7 @@ use App\Models\Member;
 use App\Models\Payment;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
+use Illuminate\Support\Facades\Cache;
 
 class AdminDashboard extends Component
 {
@@ -63,24 +64,55 @@ class AdminDashboard extends Component
     private function refreshMemberStats(): void
     {
         $this->stats = [
-            ...$this->stats,
-            'total_members' => Member::count(),
-            'active_members' => Member::active()->count(),
-            'expired_members' => Member::expired()->count(),
-        ];
+        ...$this->stats,
+        'total_members' => Cache::remember(
+            'dashboard.total_members',
+            now()->addMinutes(10),
+            fn () => Member::count()
+        ),
+        'active_members' => Cache::remember(
+            'dashboard.active_members',
+            now()->addMinutes(10),
+            fn () => Member::active()->count()
+        ),
+        'expired_members' => Cache::remember(
+            'dashboard.expired_members',
+            now()->addMinutes(10),
+            fn () => Member::expired()->count()
+        ),
+    ];
+}
     }
 
     private function refreshRevenueStats(): void
     {
         $this->stats = [
-            ...$this->stats,
-            'total_revenue' => (string) Payment::sum('amount'),
-            'monthly_revenue' => (string) Payment::whereMonth('payment_date', now()->month)
+        ...$this->stats,
+        'total_revenue' => Cache::remember(
+            'dashboard.total_revenue',
+            now()->addMinutes(10),
+            fn () => (string) Payment::sum('amount')
+        ),
+
+        'monthly_revenue' => Cache::remember(
+            'dashboard.monthly_revenue',
+            now()->addMinutes(10),
+            fn () => (string) Payment::whereMonth('payment_date', now()->month)
                 ->whereYear('payment_date', now()->year)
-                ->sum('amount'),
-            'daily_revenue' => (string) Payment::whereDate('payment_date', now()->toDateString())->sum('amount'),
-        ];
-        $this->refreshMonthlyRevenueSeries();
+                ->sum('amount')
+        ),
+
+        'daily_revenue' => Cache::remember(
+            'dashboard.daily_revenue',
+            now()->addMinutes(10),
+            fn () => (string) Payment::whereDate(
+                'payment_date',
+                now()->toDateString()
+            )->sum('amount')
+        ),
+    ];
+
+    $this->refreshMonthlyRevenueSeries();
     }
 
     /**

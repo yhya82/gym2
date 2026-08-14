@@ -11,6 +11,8 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\On;
 use Livewire\Component;
+use Illuminate\Validation\ValidationException;
+
 
 class RenewalModal extends Component
 {
@@ -73,35 +75,45 @@ class RenewalModal extends Component
     }
 
     public function renew(MembershipRenewalService $renewal): void
-    {
-        $member = Member::findOrFail($this->memberId);
-        Gate::authorize('renew', $member);
+{
+    $member = Member::findOrFail($this->memberId);
 
-        $validated = $this->validate([
-            'plan_id' => ['required', 'integer', 'exists:plans,id'],
-            'start_date' => ['required', 'date'],
-            'payment_amount' => ['required', 'numeric', 'gt:0'],
-        ]);
+    Gate::authorize('renew', $member);
 
-        $plan = Plan::findOrFail($validated['plan_id']);
+    $validated = $this->validate([
+        'plan_id' => ['required', 'integer', 'exists:plans,id'],
+        'start_date' => ['required', 'date'],
+        'payment_amount' => ['required', 'numeric', 'gt:0'],
+    ]);
 
-        try {
-            $renewal->renew(
-                $member,
-                $plan,
-                Carbon::parse($validated['start_date']),
-                (string) $validated['payment_amount'],
-                auth()->user(),
-            );
-        } catch (PaymentExceedsBalanceException $e) {
-            $this->addError('payment_amount', $e->getMessage());
+    $plan = Plan::findOrFail($validated['plan_id']);
 
-            return;
+    try {
+        $renewal->renew(
+            $member,
+            $plan,
+            Carbon::parse($validated['start_date']),
+            (string) $validated['payment_amount'],
+            auth()->user(),
+        );
+    } catch (PaymentExceedsBalanceException $e) {
+        $this->addError('payment_amount', $e->getMessage());
+
+        return;
+    } catch (ValidationException $e) {
+        foreach ($e->errors() as $field => $messages) {
+            foreach ($messages as $message) {
+                $this->addError($field, $message);
+            }
         }
 
-        $this->dispatch('close-modal', 'renewal-modal');
-        $this->dispatch('member-renewed');
+        return;
     }
+
+    // Only runs when renewal succeeds
+    $this->dispatch('close-modal', 'renewal-modal');
+    $this->dispatch('member-renewed');
+}
 
     public function render(): View
     {

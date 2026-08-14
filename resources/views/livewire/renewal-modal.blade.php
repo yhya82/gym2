@@ -7,7 +7,12 @@
                 <span class="{{ $memberStatus === 'active' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
                     {{ ucfirst($memberStatus) }}
                 </span>
-            </p>
+               </p>
+                 @error('member')
+                     <p class="mt-2 text-sm font-medium text-red-600 dark:text-red-400">
+                        {{ $message }}
+                     </p>
+                    @enderror
 
             <form wire:submit="renew" class="mt-4 space-y-4">
                 <div>

@@ -36,6 +36,9 @@ class ExpireMemberships extends Command
      */
     public function handle(): int
     {
+        \Log::info('memberships:expire scheduler ran', [
+    'time' => now()->toDateTimeString(),
+]);
         $today = now()->toDateString();
         $expiredCount = 0;
 

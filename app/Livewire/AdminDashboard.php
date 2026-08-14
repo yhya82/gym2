@@ -82,7 +82,7 @@ class AdminDashboard extends Component
         ),
     ];
 }
-    }
+    
 
     private function refreshRevenueStats(): void
     {

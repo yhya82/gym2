@@ -26,7 +26,10 @@ class PaymentController extends Controller
 
         $payments = Payment::query()
             ->search(Request::query('search'))
-            ->with(['member', 'receivedBy'])
+            ->with([
+                'member' => fn ($query) => $query->withTrashed(),
+                'receivedBy' => fn ($query) => $query->withTrashed(),
+            ])
             ->latest('payment_date')
             ->paginate(15)
             ->withQueryString();

@@ -100,7 +100,7 @@ class LoginForm extends Form
         $attempts = $user->failed_login_attempts + 1;
 
         $lockoutMinutes = match (true) {
-            $attempts >= 15 => 30,
+            $attempts >= 15 => 15,
             $attempts >= 10 => 10,
             $attempts >= 5 => 1,
             default => 0,

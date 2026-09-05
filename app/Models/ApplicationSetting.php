@@ -7,6 +7,7 @@ use App\Observers\ApplicationSettingObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 #[ObservedBy([ApplicationSettingObserver::class])]
 class ApplicationSetting extends Model
@@ -49,5 +50,22 @@ class ApplicationSetting extends Model
     public static function current(): self
     {
         return Cache::rememberForever('application_settings', fn () => static::findOrFail(1));
+    }
+
+    /**
+     * The 's3' disk is private (bucket policy, not public-read), so it needs
+     * a signed URL — but the 'public' disk used locally doesn't support
+     * temporaryUrl() at all, so which one to call is driven by whatever
+     * FILESYSTEM_DISK actually is, not hardcoded either way.
+     */
+    public static function urlFor(?string $path): ?string
+    {
+        if (! $path) {
+            return null;
+        }
+
+        return config('filesystems.default') === 's3'
+            ? Storage::disk('s3')->temporaryUrl($path, now()->addMinutes(10))
+            : Storage::url($path);
     }
 }

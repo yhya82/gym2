@@ -34,7 +34,7 @@
             <div class="hidden lg:flex lg:w-1/2 xl:w-3/5 flex-col justify-between bg-indigo-600 dark:bg-indigo-900 text-white px-12 py-12">
                 <div class="flex items-center gap-2">
                     @if ($settings->logo)
-                        <img src="{{ \Illuminate\Support\Facades\Storage::url($settings->logo) }}" alt="" class="h-9 w-9 rounded object-cover shrink-0">
+                        <img src="{{ \App\Models\ApplicationSetting::urlFor($settings->logo) }}" alt="" class="h-9 w-9 rounded object-cover shrink-0">
                     @else
                         <x-application-logo class="h-9 w-9 fill-current text-white" />
                     @endif
@@ -96,7 +96,7 @@
                 <div class="w-full max-w-sm">
                     <div class="lg:hidden flex items-center gap-2 mb-8 justify-center">
                         @if ($settings->logo)
-                            <img src="{{ \Illuminate\Support\Facades\Storage::url($settings->logo) }}" alt="" class="h-9 w-9 rounded object-cover shrink-0">
+                            <img src="{{ \App\Models\ApplicationSetting::urlFor($settings->logo) }}" alt="" class="h-9 w-9 rounded object-cover shrink-0">
                         @else
                             <x-application-logo class="h-9 w-9 fill-current text-indigo-600" />
                         @endif

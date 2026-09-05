@@ -25,7 +25,7 @@
                         <img src="{{ $logoUpload->temporaryUrl() }}"  alt="Logo" class="h-12 w-12 rounded-md object-cover border border-gray-200 dark:border-gray-600">
                     @elseif ($logo)
                         <img
-                                src="{{ \Illuminate\Support\Facades\Storage::url($logo) }}" alt="Logo" class="h-12 w-12 rounded-md object-cover border border-gray-200 dark:border-gray-600">
+                                src="{{ \App\Models\ApplicationSetting::urlFor($logo) }}" alt="Logo" class="h-12 w-12 rounded-md object-cover border border-gray-200 dark:border-gray-600">
                     @else
                         <div class="h-12 w-12 rounded-md border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center text-xs text-gray-400 dark:text-gray-500">{{ __('None') }}</div>
                     @endif

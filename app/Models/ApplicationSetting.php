@@ -53,10 +53,9 @@ class ApplicationSetting extends Model
     }
 
     /**
-     * The 's3' disk is private (bucket policy, not public-read), so it needs
-     * a signed URL — but the 'public' disk used locally doesn't support
-     * temporaryUrl() at all, so which one to call is driven by whatever
-     * FILESYSTEM_DISK actually is, not hardcoded either way.
+     * The logo always lives on the 's3' disk (SettingsPage stores it there
+     * directly), and that bucket is private — always a signed URL, not
+     * driven by FILESYSTEM_DISK.
      */
     public static function urlFor(?string $path): ?string
     {
@@ -64,8 +63,6 @@ class ApplicationSetting extends Model
             return null;
         }
 
-        return config('filesystems.default') === 's3'
-            ? Storage::disk('s3')->temporaryUrl($path, now()->addMinutes(10))
-            : Storage::url($path);
+        return Storage::disk('s3')->temporaryUrl($path, now()->addMinutes(10));
     }
 }

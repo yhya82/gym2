@@ -7,7 +7,7 @@
 
     <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Phone Number') }} *</label>
-        <input type="text" wire:model="phone_number" placeholder="7771234" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+        <input type="text" wire:model="phone_number" placeholder="835190199" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
         @error('phone_number') <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
     </div>
 

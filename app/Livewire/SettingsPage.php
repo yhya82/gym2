@@ -71,10 +71,10 @@ class SettingsPage extends Component
 
         if ($this->logoUpload) {
             if ($settings->logo) {
-                Storage::disk('s3')->delete($settings->logo);
+                Storage::delete($settings->logo);
             }
 
-            $data['logo'] = $this->logoUpload->store('logos', 's3');
+            $data['logo'] = $this->logoUpload->store('logos');
         }
 
         $settings->update($data);
@@ -91,7 +91,7 @@ class SettingsPage extends Component
         Gate::authorize('update', $settings);
 
         if ($settings->logo) {
-            Storage::disk('s3')->delete($settings->logo);
+            Storage::delete($settings->logo);
         }
 
         $settings->update(['logo' => null]);

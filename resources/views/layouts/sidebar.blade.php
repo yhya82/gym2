@@ -32,7 +32,7 @@ $isAdmin = auth()->user()->role === \App\Enums\UserRole::Admin;
     >
         <div class="h-16 shrink-0 flex items-center gap-2 px-6 border-b border-gray-200 dark:border-gray-700">
            @if ($settings->logo)
-                <img src="{{ \Illuminate\Support\Facades\Storage::disk('s3')->temporaryUrl($settings->logo, now()->addMinutes(10)) }}"
+                <img src="{{ \Illuminate\Support\Facades\Storage::url($settings->logo) }}"
                 alt=""class="h-8 w-8 rounded object-cover shrink-0">
             @else
              <x-application-logo class="h-8 w-8 fill-current text-indigo-600" />

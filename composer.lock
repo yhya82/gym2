@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1d2ec57d908f9bf190aaa155ea14e673",
+    "content-hash": "a1aff7cb8385f138b4ada7a02ae17766",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -909,16 +909,16 @@
         },
         {
             "name": "giggsey/libphonenumber-for-php",
-            "version": "9.0.34",
+            "version": "9.0.38",
             "source": {
                 "type": "git",
                 "url": "https://github.com/giggsey/libphonenumber-for-php.git",
-                "reference": "4dfd6bc0eb0ed3166e77595a905bd83c8fe29f3e"
+                "reference": "ba273135702a0d0c1f5954dc7291bfc4082da4f0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/giggsey/libphonenumber-for-php/zipball/4dfd6bc0eb0ed3166e77595a905bd83c8fe29f3e",
-                "reference": "4dfd6bc0eb0ed3166e77595a905bd83c8fe29f3e",
+                "url": "https://api.github.com/repos/giggsey/libphonenumber-for-php/zipball/ba273135702a0d0c1f5954dc7291bfc4082da4f0",
+                "reference": "ba273135702a0d0c1f5954dc7291bfc4082da4f0",
                 "shasum": ""
             },
             "require": {
@@ -981,7 +981,7 @@
                 "issues": "https://github.com/giggsey/libphonenumber-for-php/issues",
                 "source": "https://github.com/giggsey/libphonenumber-for-php"
             },
-            "time": "2026-07-03T10:22:37+00:00"
+            "time": "2026-09-01T10:42:16+00:00"
         },
         {
             "name": "giggsey/locale",

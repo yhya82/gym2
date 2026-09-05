@@ -52,7 +52,7 @@
                                 {{ $member->full_name }}
                             </a>
                         </td>
-                        <td class="px-4 py-3 text-gray-500 dark:text-gray-400">{{ $member->phone_number }}</td>
+                        <td class="px-4 py-3 text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ $member->phone_number_formatted }}</td>
                         <td class="px-4 py-3 text-gray-500 dark:text-gray-400">{{ $member->currentSubscription?->plan?->plan_name ?? '—' }}</td>
                         <td class="px-4 py-3 text-gray-500 dark:text-gray-400 tabular-nums">
                             {{ $member->currentSubscription ? $currency.' '.number_format($member->currentSubscription->plan_price, 2) : '—' }}

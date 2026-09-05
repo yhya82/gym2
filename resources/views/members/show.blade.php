@@ -39,7 +39,7 @@
                         <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-400">{{ __('Expired') }}</span>
                     @endif
                 </div>
-                <p class="text-sm text-gray-500 dark:text-gray-400">{{ $member->phone_number }} &middot; {{ __('created by') }} {{ $member->createdBy->name }}</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{{ $member->phone_number_formatted }} &middot; {{ __('created by') }} {{ $member->createdBy->name }}</p>
             </div>
 
             @unless ($member->trashed())

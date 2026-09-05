@@ -6,6 +6,7 @@ use App\Enums\MembershipStatus;
 use App\Observers\MemberObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -35,6 +36,18 @@ class Member extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Display-only: "+220 835190199" rather than the stored "+220835190199"
+     * — the local number is always 9 digits since the plan migration, so
+     * everything before the last 9 digits is the country code.
+     */
+    protected function phoneNumberFormatted(): Attribute
+    {
+        return Attribute::get(
+            fn () => substr($this->phone_number, 0, -9).' '.substr($this->phone_number, -9),
+        );
     }
 
     public function subscriptions(): HasMany

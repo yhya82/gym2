@@ -41,6 +41,14 @@ class PhoneNumberService
             throw new InvalidPhoneNumberException("\"{$rawNumber}\" is not a valid phone number.");
         }
 
+        // Gambia's numbering plan moved from 7 to 9 digits — libphonenumber
+        // still accepts the old 7-digit shape as "valid" (it hasn't been
+        // retired from the plan), so this rejects it explicitly rather than
+        // letting new registrations quietly re-enter the old format.
+        if (strlen((string) $parsed->getNationalNumber()) !== 9) {
+            throw new InvalidPhoneNumberException("\"{$rawNumber}\" must be a 9-digit phone number.");
+        }
+
         return $util->format($parsed, PhoneNumberFormat::E164);
     }
 }

@@ -27,7 +27,9 @@ class UpdateSettingRequest extends FormRequest
             'logo' => ['nullable', 'string', 'max:255'],
             'location' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:255'],
+            // Format/validity (libphonenumber) is enforced by PhoneNumberService
+            // in the controller, not here — same split as Member/User's phone.
+            'phone' => ['nullable', 'string', 'max:20'],
             'currency' => ['required', 'string', 'max:3'],
             'timezone' => ['required', 'string', 'timezone'],
             'default_theme' => ['required', 'in:light,dark'],

@@ -70,6 +70,26 @@ class MemberForm extends Component
         $this->dispatch('open-modal', 'member-form-modal');
     }
 
+    /**
+     * Opens the same shared panel as loadForEdit(), reset to a blank create
+     * form — triggered from the index page's "+ Create Member" button
+     * instead of navigating to the standalone members.create page.
+     */
+    #[On('create-member')]
+    public function newMember(): void
+    {
+        Gate::authorize('create', Member::class);
+
+        $this->resetErrorBag();
+        $this->memberId = null;
+        $this->full_name = '';
+        $this->phone_number = '';
+        $this->plan_id = null;
+        $this->start_date = now()->toDateString();
+        $this->payment_amount = '';
+        $this->dispatch('open-modal', 'member-form-modal');
+    }
+
     public function save(MemberRegistrationService $registration, PhoneNumberService $phoneNumbers): void
     {
         if ($this->memberId) {

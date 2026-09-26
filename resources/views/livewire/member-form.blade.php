@@ -5,11 +5,8 @@
             @include('livewire.partials.member-form-fields')
         </div>
     @else
-        <x-modal name="member-form-modal" focusable>
-            <div class="p-6 bg-white dark:bg-gray-800">
-                <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-6">{{ __('Edit Member') }}</h2>
-                @include('livewire.partials.member-form-fields')
-            </div>
-        </x-modal>
+        <x-slide-over name="member-form-modal" title="{{ $memberId ? __('Edit Member') : __('Create Member') }}">
+            @include('livewire.partials.member-form-fields')
+        </x-slide-over>
     @endif
 </div>

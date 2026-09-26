@@ -70,11 +70,31 @@ class SettingsPage extends Component
         $data = collect($validated)->except('logoUpload')->all();
 
         if ($this->logoUpload) {
+            try {
+                $path = $this->logoUpload->store('logos', 's3');
+
+                // The 's3' disk has 'throw' => false, so a failed write
+                // doesn't raise an exception on its own — store() still
+                // returns a path as if it succeeded. Confirming the object
+                // actually landed (and catching any other S3-side failure,
+                // e.g. misconfigured credentials/bucket) prevents a stale,
+                // broken reference from ever reaching the database.
+                $uploaded = Storage::disk('s3')->exists($path);
+            } catch (\Throwable $e) {
+                $uploaded = false;
+            }
+
+            if (! $uploaded) {
+                $this->addError('logoUpload', __('The logo failed to upload — please try again.'));
+
+                return;
+            }
+
             if ($settings->logo) {
                 Storage::disk('s3')->delete($settings->logo);
             }
 
-            $data['logo'] = $this->logoUpload->store('logos', 's3');
+            $data['logo'] = $path;
         }
 
         $settings->update($data);

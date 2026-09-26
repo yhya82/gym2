@@ -27,14 +27,17 @@
     </head>
     <body class="h-full font-sans antialiased">
         <div class="min-h-full flex">
-            @php $settings = \App\Models\ApplicationSetting::current(); @endphp
+            @php
+                $settings = \App\Models\ApplicationSetting::current();
+                $logoUrl = \App\Models\ApplicationSetting::urlFor($settings->logo);
+            @endphp
 
             {{-- Feature panel — hidden on small screens so the form gets full
                  width there rather than competing for space. --}}
             <div class="hidden lg:flex lg:w-1/2 xl:w-3/5 flex-col justify-between bg-indigo-600 dark:bg-indigo-900 text-white px-12 py-12">
                 <div class="flex items-center gap-2">
-                    @if ($settings->logo)
-                        <img src="{{ \App\Models\ApplicationSetting::urlFor($settings->logo) }}" alt="" class="h-9 w-9 rounded object-cover shrink-0">
+                    @if ($logoUrl)
+                        <img src="{{ $logoUrl }}" alt="" class="h-9 w-9 rounded object-cover shrink-0">
                     @else
                         <x-application-logo class="h-9 w-9 fill-current text-white" />
                     @endif
@@ -95,8 +98,8 @@
             <div class="flex-1 flex flex-col justify-center items-center px-6 py-12 bg-white dark:bg-gray-900">
                 <div class="w-full max-w-sm">
                     <div class="lg:hidden flex items-center gap-2 mb-8 justify-center">
-                        @if ($settings->logo)
-                            <img src="{{ \App\Models\ApplicationSetting::urlFor($settings->logo) }}" alt="" class="h-9 w-9 rounded object-cover shrink-0">
+                        @if ($logoUrl)
+                            <img src="{{ $logoUrl }}" alt="" class="h-9 w-9 rounded object-cover shrink-0">
                         @else
                             <x-application-logo class="h-9 w-9 fill-current text-indigo-600" />
                         @endif

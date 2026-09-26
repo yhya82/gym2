@@ -10,6 +10,10 @@
         <x-stat-card icon="revenue" label="{{ __('Total Revenue') }}" value="{{ $currency }} {{ number_format((float) ($stats['total_revenue'] ?? 0), 0) }}" />
         <x-stat-card icon="calendar" label="{{ __('Monthly Revenue') }}" value="{{ $currency }} {{ number_format((float) ($stats['monthly_revenue'] ?? 0), 0) }}" />
         <x-stat-card icon="clock" label="{{ __('Daily Revenue') }}" value="{{ $currency }} {{ number_format((float) ($stats['daily_revenue'] ?? 0), 2) }}" />
+    </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <x-stat-card icon="expenses" accent="red" label="{{ __('Total Expenses') }}" value="{{ $currency }} {{ number_format((float) ($stats['total_expenses'] ?? 0), 0) }}" />
         <x-stat-card icon="members" label="{{ __('Total Members') }}" value="{{ $stats['total_members'] ?? 0 }}" />
         <x-stat-card icon="check-circle" accent="green" label="{{ __('Active Members') }}" value="{{ $stats['active_members'] ?? 0 }}" />
         <x-stat-card icon="x-circle" accent="red" label="{{ __('Expired Members') }}" value="{{ $stats['expired_members'] ?? 0 }}" />

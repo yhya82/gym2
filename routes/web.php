@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\ExpenseCategoryController;
+use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PlanController;
@@ -54,6 +56,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('role:admin')->group(function () {
         Route::resource('plans', PlanController::class)->except(['create', 'edit', 'show']);
         Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
+        Route::resource('expenses', ExpenseController::class)->except(['create', 'edit', 'show']);
+        Route::resource('expense-categories', ExpenseCategoryController::class)->except(['index', 'create', 'edit', 'show']);
         Route::resource('users', UserController::class)->except(['create', 'edit', 'show']);
         Route::get('settings', [SettingController::class, 'show'])->name('settings.show');
         Route::put('settings', [SettingController::class, 'update'])->name('settings.update');

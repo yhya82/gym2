@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\Expense;
 use App\Models\Member;
 use App\Models\Payment;
 use Illuminate\Contracts\View\View;
@@ -109,6 +110,20 @@ class AdminDashboard extends Component
                 'payment_date',
                 now()->toDateString()
             )->sum('amount')
+        ),
+
+        'total_expenses' => Cache::remember(
+            'dashboard.total_expenses',
+            now()->addMinutes(10),
+            fn () => (string) Expense::sum('amount')
+        ),
+
+        'monthly_expenses' => Cache::remember(
+            'dashboard.monthly_expenses',
+            now()->addMinutes(10),
+            fn () => (string) Expense::whereMonth('expense_date', now()->month)
+                ->whereYear('expense_date', now()->year)
+                ->sum('amount')
         ),
     ];
 

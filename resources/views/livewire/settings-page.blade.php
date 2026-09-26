@@ -21,11 +21,12 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Logo') }}</label>
                 <div class="mt-2 flex items-center gap-4">
+                    @php $logoUrl = \App\Models\ApplicationSetting::urlFor($logo); @endphp
                     @if ($logoUpload && $logoUpload->isPreviewable())
                         <img src="{{ $logoUpload->temporaryUrl() }}"  alt="Logo" class="h-12 w-12 rounded-md object-cover border border-gray-200 dark:border-gray-600">
-                    @elseif ($logo)
+                    @elseif ($logoUrl)
                         <img
-                                src="{{ \App\Models\ApplicationSetting::urlFor($logo) }}" alt="Logo" class="h-12 w-12 rounded-md object-cover border border-gray-200 dark:border-gray-600">
+                                src="{{ $logoUrl }}" alt="Logo" class="h-12 w-12 rounded-md object-cover border border-gray-200 dark:border-gray-600">
                     @else
                         <div class="h-12 w-12 rounded-md border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center text-xs text-gray-400 dark:text-gray-500">{{ __('None') }}</div>
                     @endif
@@ -58,7 +59,8 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Phone') }}</label>
-                    <input type="text" wire:model="phone" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <input type="text" wire:model="phone" placeholder="835190199" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    @error('phone') <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
                 </div>
             </div>
 

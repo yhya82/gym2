@@ -63,6 +63,13 @@ class ApplicationSetting extends Model
             return null;
         }
 
-        return Storage::disk('s3')->temporaryUrl($path, now()->addMinutes(10));
+        try {
+            return Storage::disk('s3')->temporaryUrl($path, now()->addMinutes(10));
+        } catch (\Throwable $e) {
+            // Misconfigured/unreachable S3 (e.g. no AWS credentials locally)
+            // shouldn't take down every page that renders the logo — fall
+            // back to "no logo" so callers show the default icon instead.
+            return null;
+        }
     }
 }

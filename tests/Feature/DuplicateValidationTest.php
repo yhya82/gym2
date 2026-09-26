@@ -70,34 +70,34 @@ class DuplicateValidationTest extends TestCase
     {
         $admin = User::factory()->create(['role' => UserRole::Admin]);
         $plan = Plan::factory()->create(['price' => 50]);
-        Member::factory()->create(['phone_number' => '+2207001234']);
+        Member::factory()->create(['phone_number' => '+220835001234']);
 
         $response = $this->actingAs($admin)->post('/members', [
             'full_name' => 'Duplicate Phone',
-            'phone_number' => '+2207001234',
+            'phone_number' => '+220835001234',
             'plan_id' => $plan->id,
             'start_date' => now()->toDateString(),
             'payment_amount' => 10,
         ]);
 
         $response->assertSessionHasErrors('phone_number');
-        $this->assertSame(1, Member::where('phone_number', '+2207001234')->count());
+        $this->assertSame(1, Member::where('phone_number', '+220835001234')->count());
     }
 
     public function test_editing_a_member_to_a_phone_number_already_in_use_fails_validation_via_the_form_component(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Admin]);
-        Member::factory()->create(['phone_number' => '+2207001234']);
-        $editing = Member::factory()->create(['phone_number' => '+2207005678']);
+        Member::factory()->create(['phone_number' => '+220835001234']);
+        $editing = Member::factory()->create(['phone_number' => '+220866001234']);
 
         Livewire::actingAs($admin)
             ->test(\App\Livewire\MemberForm::class)
             ->call('loadForEdit', $editing->id)
             ->set('full_name', $editing->full_name)
-            ->set('phone_number', '+2207001234')
+            ->set('phone_number', '+220835001234')
             ->call('save')
             ->assertHasErrors('phone_number');
 
-        $this->assertSame('+2207005678', $editing->fresh()->phone_number);
+        $this->assertSame('+220866001234', $editing->fresh()->phone_number);
     }
 }

@@ -57,4 +57,14 @@ class MemberPolicy
     {
         return $user->role === UserRole::Admin;
     }
+
+    /**
+     * Bulk-exporting every matching row in one file is a materially
+     * different capability than viewing one paginated page at a time, even
+     * though the columns match what's already on screen — Admin-only.
+     */
+    public function export(User $user): bool
+    {
+        return $user->role === UserRole::Admin;
+    }
 }

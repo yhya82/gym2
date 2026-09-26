@@ -34,6 +34,10 @@ class StoreUserRequest extends FormRequest
                 'required', 'email', 'max:255',
                 Rule::unique('users', 'email')->whereNull('deleted_at'),
             ],
+            // Format/validity (libphonenumber) is enforced by PhoneNumberService
+            // in the controller, not here — this only checks presence, same
+            // split StoreMemberRequest uses for its own phone_number.
+            'phone_number' => ['required', 'string', 'max:20'],
             'password' => ['required', 'string', 'min:8'],
             'role' => ['required', 'in:admin,receptionist'],
         ];

@@ -10,6 +10,10 @@
         <x-stat-card icon="revenue" label="{{ __('Total Revenue') }}" value="{{ $currency }} {{ number_format((float) ($stats['total_revenue'] ?? 0), 0) }}" />
         <x-stat-card icon="calendar" label="{{ __('Monthly Revenue') }}" value="{{ $currency }} {{ number_format((float) ($stats['monthly_revenue'] ?? 0), 0) }}" />
         <x-stat-card icon="clock" label="{{ __('Daily Revenue') }}" value="{{ $currency }} {{ number_format((float) ($stats['daily_revenue'] ?? 0), 2) }}" />
+    </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <x-stat-card icon="expenses" accent="red" label="{{ __('Total Expenses') }}" value="{{ $currency }} {{ number_format((float) ($stats['total_expenses'] ?? 0), 0) }}" />
         <x-stat-card icon="members" label="{{ __('Total Members') }}" value="{{ $stats['total_members'] ?? 0 }}" />
         <x-stat-card icon="check-circle" accent="green" label="{{ __('Active Members') }}" value="{{ $stats['active_members'] ?? 0 }}" />
         <x-stat-card icon="x-circle" accent="red" label="{{ __('Expired Members') }}" value="{{ $stats['expired_members'] ?? 0 }}" />
@@ -97,18 +101,20 @@
     <div>
         <h2 class="text-sm font-medium text-gray-700 dark:text-gray-200 mb-3">{{ __('Quick Actions') }}</h2>
         <div class="flex flex-wrap gap-3">
-            <a href="{{ route('members.create') }}" wire:navigate class="inline-flex items-center px-4 py-2 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500">
+            <button wire:click="$dispatch('create-member')" class="inline-flex items-center px-4 py-2 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500">
                 + {{ __('Add Member') }}
-            </a>
+            </button>
             <a href="{{ route('members.index') }}" wire:navigate class="inline-flex items-center px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
                 {{ __('Renew Member') }}
             </a>
             <a href="{{ route('members.index') }}" wire:navigate class="inline-flex items-center px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
                 {{ __('Record Payment') }}
             </a>
-            <a href="{{ route('plans.index') }}" wire:navigate class="inline-flex items-center px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+            <a href="{{ route('plans.index', ['create' => 1]) }}" wire:navigate class="inline-flex items-center px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
                 + {{ __('Add Plan') }}
             </a>
         </div>
     </div>
+
+    <livewire:member-form />
 </div>

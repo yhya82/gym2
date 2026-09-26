@@ -22,13 +22,15 @@
             </select>
             @error('plan_id') <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
         </div>
+    @endunless
 
-        <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Start Date') }} *</label>
-            <input type="date" wire:model="start_date" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-            @error('start_date') <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
-        </div>
+    <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Start Date') }} *</label>
+        <input type="date" wire:model="start_date" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+        @error('start_date') <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+    </div>
 
+    @unless ($memberId)
         <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Payment Amount') }} *</label>
             <input type="number" step="0.01" wire:model="payment_amount" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">

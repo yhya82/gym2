@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Enums\MembershipStatus;
 use App\Exceptions\InvalidPhoneNumberException;
 use App\Exceptions\PaymentExceedsBalanceException;
 use App\Models\Member;
@@ -11,6 +12,7 @@ use App\Services\PhoneNumberService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -60,10 +62,31 @@ class MemberForm extends Component
         $this->memberId = $member->id;
         $this->full_name = $member->full_name;
         $this->phone_number = $member->phone_number;
+        $this->start_date = $member->currentSubscription?->start_date?->toDateString() ?? '';
         // Positional arg, not named: x-modal compares $event.detail directly
         // against the modal name string (see resources/views/components/
         // modal.blade.php) — a named arg would serialize the detail as
         // {name: '...'}, which never equals that bare string.
+        $this->dispatch('open-modal', 'member-form-modal');
+    }
+
+    /**
+     * Opens the same shared panel as loadForEdit(), reset to a blank create
+     * form — triggered from the index page's "+ Create Member" button
+     * instead of navigating to the standalone members.create page.
+     */
+    #[On('create-member')]
+    public function newMember(): void
+    {
+        Gate::authorize('create', Member::class);
+
+        $this->resetErrorBag();
+        $this->memberId = null;
+        $this->full_name = '';
+        $this->phone_number = '';
+        $this->plan_id = null;
+        $this->start_date = now()->toDateString();
+        $this->payment_amount = '';
         $this->dispatch('open-modal', 'member-form-modal');
     }
 
@@ -86,13 +109,45 @@ class MemberForm extends Component
         $this->validate([
             'full_name' => ['required', 'string', 'max:255'],
             'phone_number' => ['required', 'string', 'max:20'],
+            // Nullable, not required: a member without a current subscription
+            // (shouldn't happen via normal registration, but isn't schema-
+            // enforced) has nothing for this field to apply to.
+            'start_date' => ['nullable', 'date'],
         ]);
 
         try {
-            $member->update([
-                'full_name' => $this->full_name,
-                'phone_number' => $phoneNumbers->canonicalize($this->phone_number),
-            ]);
+            DB::transaction(function () use ($member, $phoneNumbers) {
+                $memberData = [
+                    'full_name' => $this->full_name,
+                    'phone_number' => $phoneNumbers->canonicalize($this->phone_number),
+                ];
+
+                $subscription = $member->currentSubscription;
+
+                if ($subscription && $this->start_date) {
+                    $startDate = Carbon::parse($this->start_date);
+                    // Kept in sync with the plan's duration the same way
+                    // registration originally computed it — editing the
+                    // start date without this would leave expiry_date
+                    // silently disagreeing with the assigned plan length.
+                    $expiryDate = $startDate->clone()->addDays($subscription->plan->duration_days);
+                    // Same cutoff ExpireMemberships uses (expiry_date <= today)
+                    // — otherwise a backdated correction leaves status stale
+                    // until the next cron run instead of reflecting reality
+                    // immediately.
+                    $status = $expiryDate->isPast() ? MembershipStatus::Expired : MembershipStatus::Active;
+
+                    $subscription->update([
+                        'start_date' => $startDate,
+                        'expiry_date' => $expiryDate,
+                        'status' => $status,
+                    ]);
+
+                    $memberData['status'] = $status;
+                }
+
+                $member->update($memberData);
+            });
         } catch (InvalidPhoneNumberException $e) {
             $this->addError('phone_number', $e->getMessage());
 

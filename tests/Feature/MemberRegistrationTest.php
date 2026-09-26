@@ -27,7 +27,7 @@ class MemberRegistrationTest extends TestCase
 
         $member = app(MemberRegistrationService::class)->register(
             'Jane Doe',
-            '+2207001234',
+            '+220835001234',
             $plan,
             now(),
             '40.00',
@@ -37,7 +37,7 @@ class MemberRegistrationTest extends TestCase
         $this->assertDatabaseHas('members', [
             'id' => $member->id,
             'full_name' => 'Jane Doe',
-            'phone_number' => '+2207001234',
+            'phone_number' => '+220835001234',
         ]);
         $this->assertDatabaseHas('subscriptions', [
             'member_id' => $member->id,
@@ -66,7 +66,7 @@ class MemberRegistrationTest extends TestCase
         try {
             app(MemberRegistrationService::class)->register(
                 'Jane Doe',
-                '+2207001234',
+                '+220835001234',
                 $plan,
                 now(),
                 '150.00',

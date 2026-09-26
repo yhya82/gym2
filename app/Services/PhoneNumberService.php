@@ -19,7 +19,7 @@ class PhoneNumberService
      * Canonicalizes a raw, staff-entered phone number to E.164 (e.g.
      * "+2207771234"), so two different-looking inputs for the same number
      * ("7771234" vs "+220 777 1234") always resolve to the identical stored
-     * value before the members.phone_active uniqueness check ever runs.
+     * value before the members.phone_number uniqueness check ever runs.
      *
      * @throws InvalidPhoneNumberException if the number can't be parsed or
      *                                      isn't a real, valid number.

@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\ExpenseCategoryController;
+use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PlanController;
@@ -39,6 +41,13 @@ Route::post('logout', function (Request $request) {
 })->middleware('auth')->name('logout');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    // Registered before the members resource below: that resource's
+    // GET /members/{member} would otherwise swallow this as an attempted
+    // member-ID lookup, since Laravel matches routes in registration order.
+    Route::get('members/export', [MemberController::class, 'export'])
+        ->middleware('role:admin')
+        ->name('members.export');
+
     // Shared: both Admin and Receptionist manage members, renewals, and
     // record payments (§3.1/§3.2 — both roles can create/edit/renew members
     // and record payments; only archiving/restoring/viewing the Archived
@@ -54,6 +63,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('role:admin')->group(function () {
         Route::resource('plans', PlanController::class)->except(['create', 'edit', 'show']);
         Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
+        Route::resource('expenses', ExpenseController::class)->except(['create', 'edit', 'show']);
+        Route::resource('expense-categories', ExpenseCategoryController::class)->except(['index', 'create', 'edit', 'show']);
         Route::resource('users', UserController::class)->except(['create', 'edit', 'show']);
         Route::get('settings', [SettingController::class, 'show'])->name('settings.show');
         Route::put('settings', [SettingController::class, 'update'])->name('settings.update');

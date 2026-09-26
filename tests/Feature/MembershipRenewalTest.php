@@ -26,7 +26,7 @@ class MembershipRenewalTest extends TestCase
         $originalPlan = Plan::factory()->create(['price' => '50.00', 'duration_days' => 30]);
         $newPlan = Plan::factory()->create(['price' => '80.00', 'duration_days' => 30]);
 
-        $member = Member::factory()->create();
+        $member = Member::factory()->create(['status' => MembershipStatus::Expired]);
         $originalSubscription = $member->subscriptions()->create([
             'plan_id' => $originalPlan->id,
             'start_date' => now()->subDays(35),
@@ -34,7 +34,7 @@ class MembershipRenewalTest extends TestCase
             'plan_price' => $originalPlan->price,
             'amount_paid' => $originalPlan->price,
             'balance' => 0,
-            'status' => MembershipStatus::Active,
+            'status' => MembershipStatus::Expired,
         ]);
 
         $newSubscription = app(MembershipRenewalService::class)->renew(
@@ -64,7 +64,10 @@ class MembershipRenewalTest extends TestCase
         $originalPlan = Plan::factory()->create(['price' => '50.00', 'duration_days' => 30]);
         $newPlan = Plan::factory()->create(['price' => '80.00', 'duration_days' => 30]);
 
-        $member = Member::factory()->create();
+        // The member's own status is what gates renewal (Expired required);
+        // the subscription itself stays Active here since PaymentService
+        // separately requires an Active subscription to record against.
+        $member = Member::factory()->create(['status' => MembershipStatus::Expired]);
         $originalSubscription = $member->subscriptions()->create([
             'plan_id' => $originalPlan->id,
             'start_date' => now()->subDays(35),

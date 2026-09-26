@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request as RequestFacade;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MemberController extends Controller
 {
@@ -38,6 +39,60 @@ class MemberController extends Controller
         return view('members.create');
     }
 
+    /**
+     * Mirrors MemberIndex's own search/status filtering exactly, minus
+     * pagination — the export always covers every row matching the current
+     * filter, not just the page currently on screen.
+     */
+    public function export(): StreamedResponse
+    {
+        $this->authorize('export', Member::class);
+
+        $search = RequestFacade::query('search');
+        $status = RequestFacade::query('status', 'all');
+
+        $members = Member::query()
+            ->with('currentSubscription.plan')
+            ->search($search)
+            ->when($status === 'active', fn ($q) => $q->active())
+            ->when($status === 'expired', fn ($q) => $q->expired())
+            ->when($status === 'archived', fn ($q) => $q->archived())
+            ->latest()
+            ->get();
+
+        $filename = 'members-'.now()->toDateString().'.csv';
+
+        return new StreamedResponse(function () use ($members) {
+            $handle = fopen('php://output', 'w');
+
+            fputcsv($handle, ['Name', 'Phone', 'Plan', 'Plan Price', 'Amount Paid', 'Status', 'Start Date', 'Expiry Date']);
+
+            foreach ($members as $member) {
+                $subscription = $member->currentSubscription;
+
+                fputcsv($handle, [
+                    $member->full_name,
+                    // A leading "+" reads as a formula to Excel/Sheets when
+                    // opening a CSV — wrapping it in ="..." forces it to
+                    // display as the literal text instead of a warning or a
+                    // mangled value.
+                    '="'.$member->phone_number_formatted.'"',
+                    $subscription?->plan?->plan_name ?? '',
+                    $subscription?->plan_price ?? '',
+                    $subscription?->amount_paid ?? '',
+                    $member->trashed() ? 'Archived' : ucfirst($member->status->value),
+                    $subscription?->start_date?->toDateString() ?? '',
+                    $subscription?->expiry_date?->toDateString() ?? '',
+                ]);
+            }
+
+            fclose($handle);
+        }, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
+    }
+
     public function store(StoreMemberRequest $request, MemberRegistrationService $registration): RedirectResponse
     {
         $plan = Plan::findOrFail($request->validated('plan_id'));
@@ -58,7 +113,7 @@ class MemberController extends Controller
         } catch (UniqueConstraintViolationException) {
             // Canonicalization only happens inside the service, so this can't
             // be pre-validated with a Rule::unique against the raw input —
-            // the members_phone_active_unique index is the first point a
+            // the members_phone_number_unique index is the first point a
             // duplicate (post-canonicalization) can actually be detected.
             throw ValidationException::withMessages(['phone_number' => 'This phone number is already registered to another member.']);
         }

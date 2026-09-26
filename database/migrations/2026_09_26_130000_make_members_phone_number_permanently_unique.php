@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -34,6 +35,34 @@ return new class extends Migration
         }
 
         if (! Schema::hasIndex('members', 'members_phone_number_unique')) {
+            // A read-only pre-check, not a fix: the old phone_active design
+            // deliberately let an archived member's number be reused, so
+            // real active+archived duplicates may exist. Which of a
+            // conflicting pair is correct is a staff decision, not
+            // something this migration can safely guess — surfacing the
+            // exact conflicts here beats a bare MySQL "Duplicate entry"
+            // error with no indication of which rows or numbers are at
+            // fault.
+            $duplicates = DB::table('members')
+                ->select('phone_number')
+                ->selectRaw('COUNT(*) as count')
+                ->selectRaw("GROUP_CONCAT(id) as member_ids")
+                ->selectRaw("GROUP_CONCAT(full_name SEPARATOR ', ') as names")
+                ->groupBy('phone_number')
+                ->havingRaw('COUNT(*) > 1')
+                ->get();
+
+            if ($duplicates->isNotEmpty()) {
+                $details = $duplicates->map(
+                    fn ($row) => "{$row->phone_number}: member IDs [{$row->member_ids}] ({$row->names})"
+                )->implode("\n  ");
+
+                throw new \RuntimeException(
+                    "Cannot add a unique index on members.phone_number — duplicate values exist:\n  {$details}\n".
+                    'Resolve each conflict (a corrected number, or another deliberate fix) before re-running this migration.'
+                );
+            }
+
             Schema::table('members', function (Blueprint $table) {
                 $table->unique('phone_number');
             });

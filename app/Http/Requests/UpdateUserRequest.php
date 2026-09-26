@@ -30,6 +30,7 @@ class UpdateUserRequest extends FormRequest
                 'required', 'email', 'max:255',
                 Rule::unique('users', 'email')->whereNull('deleted_at')->ignore($this->route('user')),
             ],
+            'phone_number' => ['required', 'string', 'max:20'],
             'password' => ['nullable', 'string', 'min:8'],
             'role' => ['required', 'in:admin,receptionist'],
         ];

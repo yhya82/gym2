@@ -6,6 +6,7 @@ namespace App\Models;
 use App\Enums\UserRole;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -25,6 +26,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'phone_number',
         'password',
         'role',
         'profile_image',
@@ -53,6 +55,19 @@ class User extends Authenticatable
             'role' => UserRole::class,
             'locked_until' => 'datetime',
         ];
+    }
+
+    /**
+     * Display-only: "+220 835190199" rather than the stored
+     * "+220835190199" — same formatting as Member::phoneNumberFormatted().
+     */
+    protected function phoneNumberFormatted(): Attribute
+    {
+        return Attribute::get(
+            fn () => $this->phone_number
+                ? substr($this->phone_number, 0, -9).' '.substr($this->phone_number, -9)
+                : null,
+        );
     }
 
     public function createdMembers(): HasMany

@@ -30,8 +30,16 @@ $logoUrl = \App\Models\ApplicationSetting::urlFor($settings->logo);
     <nav
         @click.outside="mobileOpen = false"
         :class="[mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0', collapsed ? 'lg:w-16' : 'lg:w-64']"
-        class="fixed lg:static inset-y-0 left-0 z-50 w-64 h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-200 ease-in-out"
+        class="fixed lg:relative inset-y-0 left-0 z-50 w-64 h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-200 ease-in-out"
     >
+        <button
+            @click="collapsed = ! collapsed"
+            title="{{ __('Collapse sidebar') }}"
+            class="hidden lg:flex absolute top-16 -right-3 z-10 h-6 w-6 items-center justify-center rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 shadow-sm"
+        >
+            <x-icon name="chevron-left" class="h-3.5 w-3.5 transition-transform" x-bind:class="collapsed ? 'rotate-180' : ''" />
+        </button>
+
         <div :class="collapsed ? 'lg:px-3' : ''" class="h-16 shrink-0 flex items-center gap-2 px-6 border-b border-gray-200 dark:border-gray-700">
            @if ($logoUrl)
                 <img src="{{ $logoUrl }}"
@@ -43,14 +51,6 @@ $logoUrl = \App\Models\ApplicationSetting::urlFor($settings->logo);
              <span :class="collapsed ? 'lg:hidden' : ''" class="font-semibold text-gray-800 dark:text-gray-100 truncate">
                 {{ $settings->application_name }}
             </span>
-
-            <button
-                @click="collapsed = ! collapsed"
-                title="{{ __('Collapse sidebar') }}"
-                class="hidden lg:inline-flex ml-auto p-1 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 shrink-0"
-            >
-                <x-icon name="chevron-left" class="h-4 w-4 transition-transform" x-bind:class="collapsed ? 'rotate-180' : ''" />
-            </button>
         </div>
 
         <div class="flex-1 overflow-y-auto py-4 px-3 space-y-1">

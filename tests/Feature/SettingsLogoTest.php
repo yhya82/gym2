@@ -18,7 +18,7 @@ class SettingsLogoTest extends TestCase
 
     public function test_admin_can_upload_a_logo(): void
     {
-        Storage::fake('public');
+        Storage::fake('s3');
         $admin = User::factory()->create(['role' => UserRole::Admin]);
 
         Livewire::actingAs($admin)
@@ -29,12 +29,12 @@ class SettingsLogoTest extends TestCase
 
         $path = ApplicationSetting::current()->logo;
         $this->assertNotNull($path);
-        Storage::disk('public')->assertExists($path);
+        Storage::disk('s3')->assertExists($path);
     }
 
     public function test_uploading_a_new_logo_deletes_the_previous_file(): void
     {
-        Storage::fake('public');
+        Storage::fake('s3');
         $admin = User::factory()->create(['role' => UserRole::Admin]);
 
         Livewire::actingAs($admin)
@@ -43,7 +43,7 @@ class SettingsLogoTest extends TestCase
             ->call('save');
 
         $firstPath = ApplicationSetting::current()->logo;
-        Storage::disk('public')->assertExists($firstPath);
+        Storage::disk('s3')->assertExists($firstPath);
 
         Livewire::actingAs($admin)
             ->test(SettingsPage::class)
@@ -52,13 +52,13 @@ class SettingsLogoTest extends TestCase
 
         $secondPath = ApplicationSetting::current()->logo;
         $this->assertNotSame($firstPath, $secondPath);
-        Storage::disk('public')->assertMissing($firstPath);
-        Storage::disk('public')->assertExists($secondPath);
+        Storage::disk('s3')->assertMissing($firstPath);
+        Storage::disk('s3')->assertExists($secondPath);
     }
 
     public function test_a_non_image_upload_is_rejected(): void
     {
-        Storage::fake('public');
+        Storage::fake('s3');
         $admin = User::factory()->create(['role' => UserRole::Admin]);
 
         Livewire::actingAs($admin)
@@ -72,7 +72,7 @@ class SettingsLogoTest extends TestCase
 
     public function test_admin_can_remove_the_logo(): void
     {
-        Storage::fake('public');
+        Storage::fake('s3');
         $admin = User::factory()->create(['role' => UserRole::Admin]);
 
         Livewire::actingAs($admin)
@@ -87,7 +87,7 @@ class SettingsLogoTest extends TestCase
             ->call('removeLogo');
 
         $this->assertNull(ApplicationSetting::current()->logo);
-        Storage::disk('public')->assertMissing($path);
+        Storage::disk('s3')->assertMissing($path);
     }
 
     public function test_receptionist_cannot_access_settings_page_component(): void

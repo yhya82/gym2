@@ -49,8 +49,22 @@ class AuditLogger
             ->map(function ($new, $key) use ($model) {
                 $old = $model->getOriginal($key) ?? 'null';
 
-                return "{$key}: {$old} → {$new}";
+                return "{$key}: {$this->stringify($old)} → {$this->stringify($new)}";
             })
             ->implode(', ');
+    }
+
+    /**
+     * A changed attribute backed by a native PHP enum (e.g. Member::status)
+     * arrives here as the enum instance itself, not a plain scalar — string
+     * interpolation of that throws rather than describing the change.
+     */
+    private function stringify(mixed $value): string
+    {
+        if ($value instanceof \BackedEnum) {
+            return (string) $value->value;
+        }
+
+        return (string) $value;
     }
 }

@@ -58,7 +58,7 @@ class MemberController extends Controller
         } catch (UniqueConstraintViolationException) {
             // Canonicalization only happens inside the service, so this can't
             // be pre-validated with a Rule::unique against the raw input —
-            // the members_phone_active_unique index is the first point a
+            // the members_phone_number_unique index is the first point a
             // duplicate (post-canonicalization) can actually be detected.
             throw ValidationException::withMessages(['phone_number' => 'This phone number is already registered to another member.']);
         }

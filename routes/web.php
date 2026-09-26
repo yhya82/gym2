@@ -41,6 +41,13 @@ Route::post('logout', function (Request $request) {
 })->middleware('auth')->name('logout');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    // Registered before the members resource below: that resource's
+    // GET /members/{member} would otherwise swallow this as an attempted
+    // member-ID lookup, since Laravel matches routes in registration order.
+    Route::get('members/export', [MemberController::class, 'export'])
+        ->middleware('role:admin')
+        ->name('members.export');
+
     // Shared: both Admin and Receptionist manage members, renewals, and
     // record payments (§3.1/§3.2 — both roles can create/edit/renew members
     // and record payments; only archiving/restoring/viewing the Archived

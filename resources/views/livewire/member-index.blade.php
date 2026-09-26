@@ -6,9 +6,17 @@
 <div class="space-y-4">
     <div class="flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100">{{ __('Members') }}</h1>
-        <a href="{{ route('members.create') }}" wire:navigate class="inline-flex items-center px-4 py-2 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500">
-            + {{ __('Create Member') }}
-        </a>
+        <div class="flex items-center gap-2">
+            @if ($isAdmin)
+                <a href="{{ route('members.export', request()->only(['search', 'status'])) }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-200 hover:border-green-300 hover:bg-green-50 hover:text-green-700 dark:hover:border-green-600 dark:hover:bg-green-500/10 dark:hover:text-green-400 transition-colors">
+                    <x-icon name="download" class="h-4 w-4" />
+                    {{ __('Export CSV') }}
+                </a>
+            @endif
+            <a href="{{ route('members.create') }}" wire:navigate class="inline-flex items-center px-4 py-2 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500">
+                + {{ __('Create Member') }}
+            </a>
+        </div>
     </div>
 
     <div class="flex flex-wrap gap-3">

@@ -18,6 +18,7 @@
         'x-circle' => '<circle cx="12" cy="12" r="9"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/>',
         'audit' => '<rect x="4" y="3" width="13" height="18" rx="1.5"/><line x1="7" y1="7.5" x2="14" y2="7.5"/><line x1="7" y1="11" x2="14" y2="11"/><circle cx="17" cy="17" r="3.5"/><line x1="19.5" y1="19.5" x2="21.5" y2="21.5"/>',
         'expenses' => '<circle cx="12" cy="12" r="9"/><line x1="8" y1="12" x2="16" y2="12"/>',
+        'download' => '<path d="M12 3v12"/><polyline points="7 10 12 15 17 10"/><path d="M4 19h16"/>',
     ];
 @endphp
 

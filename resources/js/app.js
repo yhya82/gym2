@@ -19,6 +19,20 @@ document.addEventListener('alpine:init', () => {
             localStorage.setItem('theme', this.dark ? 'dark' : 'light');
         },
     });
+
+    /**
+     * Same reasoning as the theme store: the collapse toggle now lives in
+     * topnav (a sibling of the sidebar, not a descendant of it), so a local
+     * x-data on the sidebar can't be reached from there — and wire:navigate
+     * would reset a local x-data on every soft navigation anyway.
+     */
+    window.Alpine.store('sidebar', {
+        collapsed: localStorage.getItem('sidebarCollapsed') === 'true',
+        toggle() {
+            this.collapsed = !this.collapsed;
+            localStorage.setItem('sidebarCollapsed', this.collapsed ? 'true' : 'false');
+        },
+    });
 });
 
 function applyStoredTheme() {

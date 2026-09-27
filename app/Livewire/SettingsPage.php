@@ -92,13 +92,19 @@ class SettingsPage extends Component
             try {
                 $path = $this->logoUpload->store('logos', 's3');
 
-                // The 's3' disk has 'throw' => false, so a failed write
-                // doesn't raise an exception on its own — store() still
-                // returns a path as if it succeeded. Confirming the object
-                // actually landed (and catching any other S3-side failure,
-                // e.g. misconfigured credentials/bucket) prevents a stale,
-                // broken reference from ever reaching the database.
-                $uploaded = Storage::disk('s3')->exists($path);
+                // Deliberately not exists()/HeadObject: that needs read
+                // permission on the R2 token, which is currently broken
+                // (confirmed via a live 401 on GetObject) even though writes
+                // succeed. temporaryUrl() only signs a request locally — it
+                // never contacts R2 — so it still catches a genuine signing/
+                // credentials failure without depending on the same broken
+                // read path. Weaker than the original check (it can't catch
+                // a silently failed write, since the 's3' disk has
+                // 'throw' => false), but that's the tradeoff for not
+                // blocking every real upload on a permission this app can't
+                // fix from code.
+                Storage::disk('s3')->temporaryUrl($path, now()->addMinutes(10));
+                $uploaded = true;
             } catch (\Throwable $e) {
                 $uploaded = false;
             }

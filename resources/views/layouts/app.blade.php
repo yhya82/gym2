@@ -39,7 +39,7 @@
         <div class="flex h-full">
             @include('layouts.sidebar')
 
-            <div class="flex-1 flex flex-col min-w-0 pt-16 lg:pt-0">
+            <div class="flex-1 flex flex-col min-w-0">
                 @include('layouts.topnav')
 
                 <main class="flex-1 overflow-y-auto">

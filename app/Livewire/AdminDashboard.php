@@ -140,14 +140,22 @@ class AdminDashboard extends Component
 
         $rows = Payment::query()
             ->selectRaw("DATE_FORMAT(payment_date, '%Y-%m') as ym, SUM(amount) as total")
-            ->where('payment_date', '>=', now()->subMonths($monthsBack)->startOfMonth())
+            ->where('payment_date', '>=', now()->subMonthsNoOverflow($monthsBack)->startOfMonth())
             ->groupBy('ym')
             ->orderBy('ym')
             ->pluck('total', 'ym');
 
         $series = [];
         for ($i = $monthsBack; $i >= 0; $i--) {
-            $month = now()->subMonths($i);
+            // subMonthsNoOverflow (not subMonths): on the 29th–31st, plain
+            // subMonths can roll into the *next* month when the target month
+            // is shorter (e.g. Sep 30 minus 7 months isn't a valid Feb date,
+            // so it overflows into March) — that shifted both which row this
+            // iteration looked up *and* its display label, so the window
+            // could silently drop a real month's revenue and duplicate its
+            // neighbor instead. NoOverflow clamps to the target month's last
+            // valid day instead, so this always lands in the intended month.
+            $month = now()->subMonthsNoOverflow($i);
             $key = $month->format('Y-m');
             // A rolling window of at most 12 months never repeats a calendar
             // month, so "M" alone (no year) is unambiguous at every range.

@@ -28,6 +28,9 @@ document.addEventListener('alpine:init', () => {
      */
     window.Alpine.store('sidebar', {
         collapsed: localStorage.getItem('sidebarCollapsed') === 'true',
+        // Not persisted like collapsed — the mobile drawer should always
+        // start closed on a fresh page load, only opened via the hamburger.
+        mobileOpen: false,
         toggle() {
             this.collapsed = !this.collapsed;
             localStorage.setItem('sidebarCollapsed', this.collapsed ? 'true' : 'false');

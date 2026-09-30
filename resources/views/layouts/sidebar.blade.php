@@ -4,31 +4,18 @@ $isAdmin = auth()->user()->role === \App\Enums\UserRole::Admin;
 $logoUrl = \App\Models\ApplicationSetting::urlFor($settings->logo);
 @endphp
 
-<aside
-    x-data="{ mobileOpen: false }"
-    class="shrink-0"
->
-    <!-- Mobile toggle -->
-    <div class="lg:hidden fixed top-0 inset-x-0 z-30 h-16 flex items-center px-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <button @click.stop="mobileOpen = true" class="p-2 -ml-2 text-gray-500 dark:text-gray-400">
-            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-        </button>
-        <span class="ml-3 font-semibold truncate">{{ $settings->application_name }}</span>
-    </div>
-
+<aside class="shrink-0">
     <div
-        x-show="mobileOpen"
+        x-show="$store.sidebar.mobileOpen"
         x-cloak
-        @click="mobileOpen = false"
+        @click="$store.sidebar.mobileOpen = false"
         class="lg:hidden fixed inset-0 z-40 bg-black/40"
         style="display: none;"
     ></div>
 
     <nav
-        @click.outside="mobileOpen = false"
-        :class="[mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0', $store.sidebar.collapsed ? 'lg:w-16' : 'lg:w-64']"
+        @click.outside="$store.sidebar.mobileOpen = false"
+        :class="[$store.sidebar.mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0', $store.sidebar.collapsed ? 'lg:w-16' : 'lg:w-64']"
         class="fixed lg:relative inset-y-0 left-0 z-50 w-64 h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-200 ease-in-out"
     >
         <div :class="$store.sidebar.collapsed ? 'lg:px-3' : ''" class="h-16 shrink-0 flex items-center gap-2 px-6 border-b border-gray-200 dark:border-gray-700">

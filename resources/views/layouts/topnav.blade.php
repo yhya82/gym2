@@ -1,9 +1,24 @@
+@php $settings = \App\Models\ApplicationSetting::current(); @endphp
+
 <header
     class="h-16 shrink-0 flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700"
 >
-    <!-- Sidebar collapse toggle — same global-store reasoning as the theme
-         toggle below: the sidebar is a sibling include, not an ancestor of
-         this header, so a local x-data here couldn't reach it anyway. -->
+    <!-- Mobile: hamburger opens the sidebar drawer, plus the app name —
+         previously a separate fixed bar on the sidebar itself, moved here
+         so mobile has one nav bar instead of two stacked ones. Desktop:
+         the collapse-toggle chevron instead, same global-store reasoning
+         as the theme toggle below — the sidebar is a sibling include, not
+         an ancestor of this header, so a local x-data here couldn't reach
+         it anyway. -->
+    <div class="flex items-center gap-2 lg:hidden">
+        <button @click="$store.sidebar.mobileOpen = true" class="p-2 -ml-2 text-gray-500 dark:text-gray-400">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+        </button>
+        <span class="font-semibold text-gray-800 dark:text-gray-100 truncate">{{ $settings->application_name }}</span>
+    </div>
+
     <button
         @click="$store.sidebar.toggle()"
         title="{{ __('Collapse sidebar') }}"

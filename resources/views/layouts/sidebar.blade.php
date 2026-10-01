@@ -31,7 +31,7 @@ $logoUrl = \App\Models\ApplicationSetting::urlFor($settings->logo);
             </span>
         </div>
 
-        <div class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+        <div @click="$store.sidebar.mobileOpen = false" class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
             <x-sidebar-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" title="{{ __('Dashboard') }}" wire:navigate>
                 <x-icon name="dashboard" class="h-5 w-5 shrink-0" />
                 <span x-bind:class="$store.sidebar.collapsed ? 'lg:hidden' : ''">{{ __('Dashboard') }}</span>

@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use App\Enums\MembershipStatus;
 use Livewire\WithPagination;
 
 class MemberIndex extends Component
@@ -70,6 +71,9 @@ class MemberIndex extends Component
             ->when($this->status === 'active', fn ($q) => $q->active())
             ->when($this->status === 'expired', fn ($q) => $q->expired())
             ->when($this->status === 'archived', fn ($q) => $q->archived())
+            ->orderByRaw(" CASE WHEN members.status = ? THEN 0 WHEN members.status = ? THEN 1 ELSE 2 END ",
+             [ MembershipStatus::Active->value, 
+            MembershipStatus::Expired->value, ])
             ->latest()
             ->paginate(15);
     }

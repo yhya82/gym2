@@ -54,6 +54,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => UserRole::class,
             'locked_until' => 'datetime',
+            'must_change_password' => 'boolean',
         ];
     }
 
@@ -95,6 +96,68 @@ class User extends Authenticatable
     public function auditLogs(): HasMany
     {
         return $this->hasMany(AuditLog::class);
+    }
+
+    public function passwordHistories(): HasMany
+    {
+        return $this->hasMany(PasswordHistory::class);
+    }
+
+    public function loginAttempts(): HasMany
+    {
+        return $this->hasMany(LoginAttempt::class);
+    }
+
+    /**
+     * Whether the account is currently locked out by the login lockout
+     * policy (LoginForm).
+     */
+    public function isLocked(): bool
+    {
+        return $this->locked_until !== null && $this->locked_until->isFuture();
+    }
+
+    /**
+     * Every place a password gets set (Admin user management, profile
+     * update, password reset) saves through this model, so recording the
+     * hash here means none of them can forget to.
+     */
+    protected static function booted(): void
+    {
+        // created/updated rather than saved: wasRecentlyCreated stays true
+        // for the rest of an instance's life, so a saved() hook couldn't
+        // tell "just created" from "created earlier, saved again now".
+        static::created(fn (User $user) => $user->recordPasswordHistory());
+
+        static::updated(function (User $user) {
+            if (! $user->wasChanged('password')) {
+                return;
+            }
+
+            $user->recordPasswordHistory();
+
+            // Every path that sets a password validates it against the
+            // current policy first, so a new password always satisfies a
+            // pending "must change" requirement.
+            if ($user->must_change_password) {
+                $user->forceFill(['must_change_password' => false])->saveQuietly();
+            }
+        });
+    }
+
+    private function recordPasswordHistory(): void
+    {
+        $this->passwordHistories()->create(['password' => $this->password]);
+
+        $stale = $this->passwordHistories()
+            ->latest('id')
+            ->skip(PasswordHistory::MAX_KEPT)
+            ->take(PHP_INT_MAX)
+            ->pluck('id');
+
+        if ($stale->isNotEmpty()) {
+            PasswordHistory::whereKey($stale)->delete();
+        }
     }
 
     /**

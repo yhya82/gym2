@@ -13,14 +13,25 @@ class ApplicationSettingObserver
 
     // Only updated() — the singleton row is seeded once, never created or
     // deleted via user action (§20 — "Only Admin can access settings").
+    //
+    // Password-policy fields are logged separately under the "security"
+    // module, so they show in the Security Center's event feed rather than
+    // being mixed in with branding/contact edits.
     public function updated(ApplicationSetting $setting): void
     {
-        $changes = $this->audit->describeChanges($setting);
+        $securityKeys = array_keys(ApplicationSetting::SECURITY_DEFAULTS);
 
-        if ($changes === '') {
-            return;
+        $general = $this->audit->describeChanges($setting, ['updated_at', ...$securityKeys]);
+
+        if ($general !== '') {
+            $this->audit->log('update', 'settings', "Updated application settings ({$general}).");
         }
 
-        $this->audit->log('update', 'settings', "Updated application settings ({$changes}).");
+        $nonSecurityKeys = array_diff(array_keys($setting->getChanges()), $securityKeys);
+        $security = $this->audit->describeChanges($setting, $nonSecurityKeys);
+
+        if ($security !== '') {
+            $this->audit->log('update-policy', 'security', "Updated the password policy ({$security}).");
+        }
     }
 }

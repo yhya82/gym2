@@ -20,12 +20,11 @@ use Illuminate\Support\Facades\Route;
 Route::redirect('/', '/login');
 
 Route::view('dashboard', 'dashboard')
-
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth', 'verified', 'password.compliant'])
     ->name('dashboard');
 
 Route::view('profile', 'profile')
-    ->middleware(['auth'])
+    ->middleware(['auth', 'password.compliant'])
     ->name('profile');
 
 // The Livewire/Volt auth stack has no plain logout route of its own (Breeze's
@@ -40,7 +39,9 @@ Route::post('logout', function (Request $request) {
     return redirect('/');
 })->middleware('auth')->name('logout');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+// password.compliant: see EnsurePasswordIsCompliant — a user whose password
+// fails the current policy is held on the change-password screen.
+Route::middleware(['auth', 'verified', 'password.compliant'])->group(function () {
     // Registered before the members resource below: that resource's
     // GET /members/{member} would otherwise swallow this as an attempted
     // member-ID lookup, since Laravel matches routes in registration order.
@@ -68,6 +69,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('users', UserController::class)->except(['create', 'edit', 'show']);
         Route::get('settings', [SettingController::class, 'show'])->name('settings.show');
         Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
+        Route::view('settings/security', 'settings.security')->name('settings.security');
         Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
     });
 });

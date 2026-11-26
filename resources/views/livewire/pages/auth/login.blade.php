@@ -20,6 +20,14 @@ new #[Layout('layouts.guest-split')] class extends Component
 
         Session::regenerate();
 
+        // Straight to the change screen rather than via the intended URL,
+        // which EnsurePasswordIsCompliant would only bounce back from.
+        if ($this->form->mustChangePassword()) {
+            $this->redirectRoute('password.change-required', navigate: true);
+
+            return;
+        }
+
         $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
     }
 }; ?>

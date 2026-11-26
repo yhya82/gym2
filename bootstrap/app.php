@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\ApplySessionTimeout;
+use App\Http\Middleware\EnsurePasswordIsCompliant;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Services\AuditLogger;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -19,6 +21,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
+            'password.compliant' => EnsurePasswordIsCompliant::class,
+        ]);
+
+        // Ahead of StartSession — see ApplySessionTimeout.
+        $middleware->web(prepend: [
+            ApplySessionTimeout::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

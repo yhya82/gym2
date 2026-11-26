@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\User;
+use App\Rules\NotInPasswordHistory;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
@@ -36,7 +38,12 @@ new #[Layout('layouts.guest')] class extends Component
         $this->validate([
             'token' => ['required'],
             'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
+            'password' => [
+                'required', 'string', 'confirmed', Rules\Password::defaults(),
+                // Null for an email with no account — the reset itself then
+                // fails below with the usual "can't find a user" message.
+                new NotInPasswordHistory(User::where('email', $this->email)->first()),
+            ],
         ]);
 
         // Here we will attempt to reset the user's password. If it is successful we

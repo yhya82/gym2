@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class StoreUserRequest extends FormRequest
 {
@@ -38,7 +39,8 @@ class StoreUserRequest extends FormRequest
             // in the controller, not here — this only checks presence, same
             // split StoreMemberRequest uses for its own phone_number.
             'phone_number' => ['required', 'string', 'max:20'],
-            'password' => ['required', 'string', 'min:8'],
+            // Security Center > Password Policy (see AppServiceProvider).
+            'password' => ['required', 'string', Password::defaults()],
             'role' => ['required', 'in:admin,receptionist'],
         ];
     }

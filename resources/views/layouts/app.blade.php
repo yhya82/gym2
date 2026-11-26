@@ -27,6 +27,13 @@
                 if (dark) {
                     document.documentElement.classList.add('dark');
                 }
+
+                // Same reason as the theme: the sidebar must be drawn
+                // collapsed from the first frame, not expanded and then
+                // shrunk once Alpine boots.
+                if (localStorage.getItem('sidebarCollapsed') === 'true') {
+                    document.documentElement.classList.add('sidebar-collapsed');
+                }
             })();
         </script>
 

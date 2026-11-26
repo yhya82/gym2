@@ -4,6 +4,8 @@
         <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Branding, contact information, and regional preferences.') }}</p>
     </div>
 
+    @include('settings.partials.tabs', ['current' => 'settings.show'])
+
     <div
         x-data="{ show: false }"
         x-on:settings-saved.window="show = true; setTimeout(() => show = false, 3000)"

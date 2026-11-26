@@ -34,22 +34,44 @@ document.addEventListener('alpine:init', () => {
         toggle() {
             this.collapsed = !this.collapsed;
             localStorage.setItem('sidebarCollapsed', this.collapsed ? 'true' : 'false');
+            // The sidebar's look is driven by this class (Tailwind's
+            // `sidebar-collapsed:` variant), not by Alpine bindings.
+            document.documentElement.classList.toggle('sidebar-collapsed', this.collapsed);
         },
     });
 });
 
-function applyStoredTheme() {
+/**
+ * Re-applies the per-device UI state that lives as classes on <html>:
+ * dark mode and the collapsed sidebar.
+ */
+function applyStoredHtmlState() {
     const stored = localStorage.getItem('theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const dark = stored ? stored === 'dark' : (window.__defaultTheme === 'dark' || (!window.__defaultTheme && prefersDark));
+    const collapsed = localStorage.getItem('sidebarCollapsed') === 'true';
 
     document.documentElement.classList.toggle('dark', dark);
+    document.documentElement.classList.toggle('sidebar-collapsed', collapsed);
 
     if (window.Alpine?.store('theme')) {
         window.Alpine.store('theme').dark = dark;
     }
+
+    if (window.Alpine?.store('sidebar')) {
+        window.Alpine.store('sidebar').collapsed = collapsed;
+        window.Alpine.store('sidebar').mobileOpen = false;
+    }
 }
 
-// The inline <head> script only prevents flash-of-wrong-theme on a hard
-// load; wire:navigate's soft transitions need this re-applied afterward.
-document.addEventListener('livewire:navigated', applyStoredTheme);
+// wire:navigate replaces <html>'s attributes with the server's copy, which
+// never has these classes. onSwap runs straight after that swap, before the
+// browser paints, so neither the theme nor the sidebar visibly flips back
+// and forth. (livewire:navigated alone fires after paint — that delay was
+// the flash of the expanded sidebar and its labels.)
+document.addEventListener('livewire:navigating', (event) => {
+    event.detail.onSwap(applyStoredHtmlState);
+});
+
+// Belt and braces for back/forward restores from Livewire's cache.
+document.addEventListener('livewire:navigated', applyStoredHtmlState);

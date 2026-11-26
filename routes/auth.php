@@ -5,8 +5,9 @@ use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
 Route::middleware('guest')->group(function () {
-    Volt::route('register', 'pages.auth.register')
-        ->name('register');
+    // No public registration: staff accounts are created by an Admin under
+    // Users (§3.2 — managing users is Admin-only). Breeze's self-service
+    // register page let anyone give themselves a Receptionist account.
 
     Volt::route('login', 'pages.auth.login')
         ->name('login');
@@ -28,4 +29,9 @@ Route::middleware('auth')->group(function () {
 
     Volt::route('confirm-password', 'pages.auth.confirm-password')
         ->name('password.confirm');
+
+    // Where EnsurePasswordIsCompliant sends a user whose password fails the
+    // current Security Center policy. Deliberately outside that middleware.
+    Volt::route('password/change', 'pages.auth.change-password')
+        ->name('password.change-required');
 });

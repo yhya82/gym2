@@ -20,11 +20,17 @@
     </div>
 
     <button
+        type="button"
         @click="$store.sidebar.toggle()"
-        title="{{ __('Collapse sidebar') }}"
-        class="hidden lg:flex p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+        :title="$store.sidebar.collapsed ? @js(__('Expand sidebar')) : @js(__('Collapse sidebar'))"
+        :aria-label="$store.sidebar.collapsed ? @js(__('Expand sidebar')) : @js(__('Collapse sidebar'))"
+        :aria-expanded="(! $store.sidebar.collapsed).toString()"
+        aria-label="{{ __('Collapse sidebar') }}"
+        class="hidden lg:flex h-10 w-10 items-center justify-center rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
     >
-        <x-icon name="chevron-left" class="h-4 w-4 transition-transform" x-bind:class="$store.sidebar.collapsed ? 'rotate-180' : ''" />
+        {{-- Rotation follows html.sidebar-collapsed (see tailwind.config.js),
+             so it's already correct on first paint and after navigation. --}}
+        <x-icon name="chevron-left" class="h-4 w-4 transition-transform sidebar-collapsed:rotate-180" aria-hidden="true" />
     </button>
 
     <div class="flex items-center gap-3">

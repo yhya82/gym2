@@ -54,4 +54,13 @@ class MemberObserver
     {
         $this->audit->log('archive', 'members', "Archived member \"{$member->full_name}\".");
     }
+
+    /**
+     * Undoing an archive (Admin-only, MemberPolicy::restore) is as much a
+     * change to who counts as a member as archiving was.
+     */
+    public function restored(Member $member): void
+    {
+        $this->audit->log('restore', 'members', "Restored archived member \"{$member->full_name}\".");
+    }
 }

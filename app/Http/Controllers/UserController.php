@@ -9,6 +9,8 @@ use App\Models\User;
 use App\Services\PhoneNumberService;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Validation\ValidationException;
@@ -27,6 +29,24 @@ class UserController extends Controller
             ->withQueryString();
 
         return view('users.index', compact('users'));
+    }
+
+    /**
+     * A user's profile, as an Admin sees it from the Users page: the same
+     * details card as /profile, plus account status and recent activity.
+     * Your own entry redirects to /profile, where it already lives.
+     */
+    public function show(User $user): View|RedirectResponse
+    {
+        $this->authorize('view', $user);
+
+        if ($user->is(Auth::user())) {
+            return redirect()->route('profile');
+        }
+
+        $recentActivity = $user->auditLogs()->latest('id')->limit(10)->get();
+
+        return view('users.show', compact('user', 'recentActivity'));
     }
 
     public function store(StoreUserRequest $request, PhoneNumberService $phoneNumbers): RedirectResponse
@@ -48,10 +68,18 @@ class UserController extends Controller
 
     public function update(UpdateUserRequest $request, User $user, PhoneNumberService $phoneNumbers): RedirectResponse
     {
-        $data = $request->safe()->except('password');
+        $data = $request->validated();
 
-        if ($request->filled('password')) {
-            $data['password'] = Hash::make($request->validated('password'));
+        // Enforced here, not just by the form disabling the select: a
+        // crafted request must not be able to demote the last Admin either.
+        if (isset($data['role']) && $data['role'] !== $user->role->value) {
+            $decision = Gate::inspect('changeRole', $user);
+
+            if ($decision->denied()) {
+                throw ValidationException::withMessages(['role' => $decision->message()]);
+            }
+        } else {
+            unset($data['role']);
         }
 
         try {

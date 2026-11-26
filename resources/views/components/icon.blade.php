@@ -20,9 +20,17 @@
         'expenses' => '<circle cx="12" cy="12" r="9"/><line x1="8" y1="12" x2="16" y2="12"/>',
         'download' => '<path d="M12 3v12"/><polyline points="7 10 12 15 17 10"/><path d="M4 19h16"/>',
         'chevron-left' => '<polyline points="18 17 13 12 18 7"/><polyline points="11 17 6 12 11 7"/>',
-    ];
+        'pencil' => '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+        'ban' => '<circle cx="12" cy="12" r="9"/><line x1="5.6" y1="5.6" x2="18.4" y2="18.4"/>',
+        'mail' => '<rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/>',
+        'phone' => '<rect x="7" y="2.5" width="10" height="19" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/>',
+        'user' => '<circle cx="12" cy="8" r="3.5"/><path d="M4.5 20c0-4.1 3.4-7.5 7.5-7.5s7.5 3.4 7.5 7.5"/>',
+        'shield' => '<path d="M12 3l7 3.5v5c0 4.5-3 8.5-7 9.5-4-1-7-5-7-9.5v-5L12 3z"/>',
+        'key' =>'<circle cx="7.5" cy="15.5" r="4"/><line x1="10.3" y1="12.7" x2="20" y2="3"/><line x1="16" y1="7" x2="18.5" y2="9.5"/><line x1="18.5" y1="4.5" x2="21" y2="7"/>',    ];
 @endphp
 
-<svg {{ $attributes->merge(['class' => 'h-5 w-5', 'fill' => 'none', 'viewBox' => '0 0 24 24', 'stroke' => 'currentColor', 'stroke-width' => '1.75', 'stroke-linecap' => 'round', 'stroke-linejoin' => 'round']) }}>
+{{-- Default size only when the caller gives no class: merge() would append
+     h-5 w-5 alongside a caller's own size, and the two would fight. --}}
+<svg {{ $attributes->class(['h-5 w-5' => ! $attributes->has('class')])->merge(['fill' => 'none', 'viewBox' => '0 0 24 24', 'stroke' => 'currentColor', 'stroke-width' => '1.75', 'stroke-linecap' => 'round', 'stroke-linejoin' => 'round']) }}>
     {!! $paths[$name] ?? '' !!}
 </svg>

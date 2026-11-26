@@ -3,11 +3,13 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Livewire\ChangePasswordModal;
 use App\Models\ApplicationSetting;
 use App\Models\LoginAttempt;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Livewire\Livewire;
 use Livewire\Volt\Volt;
 use Tests\TestCase;
 
@@ -24,7 +26,7 @@ class PasswordPolicyTest extends TestCase
     {
         $this->actingAs($user);
 
-        return Volt::test('profile.update-password-form');
+        return Livewire::test(ChangePasswordModal::class)->call('open');
     }
 
     private function createUserPayload(string $password): array
@@ -34,6 +36,7 @@ class PasswordPolicyTest extends TestCase
             'email' => 'staff@example.com',
             'phone_number' => '+220835190199',
             'password' => $password,
+            'password_confirmation' => $password,
             'role' => 'receptionist',
         ];
     }
@@ -78,17 +81,15 @@ class PasswordPolicyTest extends TestCase
         $this->setPolicy(['password_require_symbol' => true]);
 
         $this->changePasswordAs($user)
-            ->set('current_password', 'password')
             ->set('password', 'no-symbol-is-fine?')
             ->set('password_confirmation', 'no-symbol-is-fine?')
-            ->call('updatePassword')
+            ->call('save')
             ->assertHasNoErrors();
 
         $this->changePasswordAs($user->fresh())
-            ->set('current_password', 'no-symbol-is-fine?')
             ->set('password', 'nosymbolatall')
             ->set('password_confirmation', 'nosymbolatall')
-            ->call('updatePassword')
+            ->call('save')
             ->assertHasErrors(['password']);
     }
 
@@ -100,10 +101,9 @@ class PasswordPolicyTest extends TestCase
         $this->setPolicy(['password_history' => 3]);
 
         $change = fn (string $from, string $to) => $this->changePasswordAs($user->fresh())
-            ->set('current_password', $from)
             ->set('password', $to)
             ->set('password_confirmation', $to)
-            ->call('updatePassword');
+            ->call('save');
 
         // Same as the current password.
         $change('password', 'password')->assertHasErrors(['password']);
@@ -127,10 +127,9 @@ class PasswordPolicyTest extends TestCase
         $user = User::factory()->create();
 
         $this->changePasswordAs($user)
-            ->set('current_password', 'password')
             ->set('password', 'password')
             ->set('password_confirmation', 'password')
-            ->call('updatePassword')
+            ->call('save')
             ->assertHasNoErrors();
     }
 
@@ -140,13 +139,13 @@ class PasswordPolicyTest extends TestCase
         $staff = User::factory()->create(['role' => UserRole::Receptionist, 'phone_number' => '+220835190198']);
         $this->setPolicy(['password_history' => 2]);
 
-        $this->actingAs($admin)->put("/users/{$staff->id}", [
-            'name' => $staff->name,
-            'email' => $staff->email,
-            'phone_number' => '+220835190198',
-            'password' => 'password',
-            'role' => 'receptionist',
-        ])->assertSessionHasErrors('password');
+        Livewire::actingAs($admin)
+            ->test(ChangePasswordModal::class)
+            ->call('open', $staff->id)
+            ->set('password', 'password')
+            ->set('password_confirmation', 'password')
+            ->call('save')
+            ->assertHasErrors('password');
     }
 
     public function test_a_password_change_is_recorded_in_history(): void

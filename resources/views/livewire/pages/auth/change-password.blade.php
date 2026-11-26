@@ -2,7 +2,6 @@
 
 use App\Models\ApplicationSetting;
 use App\Rules\NotInPasswordHistory;
-use App\Services\AuditLogger;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
@@ -70,14 +69,9 @@ new #[Layout('layouts.guest')] class extends Component
             throw $e;
         }
 
-        // The User model's updated hook clears must_change_password.
+        // The User model's updated hook clears must_change_password, and
+        // UserObserver writes the "password-changed" audit entry.
         $user->update(['password' => Hash::make($validated['password'])]);
-
-        app(AuditLogger::class)->log(
-            'password-changed',
-            'security',
-            "{$user->name} set a new password that meets the current password policy.",
-        );
 
         $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
     }

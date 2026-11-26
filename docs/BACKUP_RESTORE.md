@@ -8,11 +8,19 @@ has, independent of anything in the code itself.
 
 ## What gets backed up
 
-1. **The database** (`gym2_db`) — every table, including the
-   `trg_payments_before_insert` trigger and the generated columns
-   (`*_active` uniqueness columns). `mysqldump --routines --triggers --events`
-   is used specifically so the trigger comes back on restore, not just the
-   rows.
+1. **The database** (`gym2_db`) — every table, including its three
+   triggers and the generated columns (`*_active` uniqueness columns).
+   `mysqldump --routines --triggers --events` is used specifically so the
+   triggers come back on restore, not just the rows:
+   - `trg_payments_before_insert` — blocks overpayment.
+   - `trg_audit_logs_no_update` — audit entries can never be edited.
+   - `trg_audit_logs_no_early_delete` — audit entries can't be deleted
+     until they're 12 months old (the retention the daily `model:prune`
+     enforces).
+
+   Backups are the only copy of audit entries older than 12 months once
+   they've been pruned — keep that in mind when choosing how long backups
+   themselves are retained.
 2. **`storage/app/public`** — currently just the Settings > Logo upload
    (`app/Livewire/SettingsPage.php`). Not in git, not in the database, so a
    DB-only backup would silently lose it. Everything else the app writes to
@@ -65,17 +73,20 @@ archive the same way, straight to the destination:
 tar -xzf /var/backups/gym2/database/storage-public-20260713-071613.tar.gz -C storage/app/public
 ```
 
-After restoring, confirm the trigger came back before trusting the
+After restoring, confirm all three triggers came back before trusting the
 database with real traffic again:
 
 ```sql
 SHOW TRIGGERS;
 ```
 
-If it's missing, the dump was taken without `--triggers` (shouldn't happen
+If any is missing, the dump was taken without `--triggers` (shouldn't happen
 via the provided script, but would happen with an ad-hoc `mysqldump` run
-that doesn't include it) — overpayment would silently stop being enforced
-at the database layer.
+that doesn't include it) — overpayment, or the audit log's protection
+against edits and early deletion, would silently stop being enforced at the
+database layer. `php artisan migrate:refresh` is **not** the fix: it would
+wipe the data you just restored. Re-run the two trigger migrations' SQL by
+hand instead.
 
 ## Restore has been tested
 

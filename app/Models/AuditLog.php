@@ -3,13 +3,26 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 class AuditLog extends Model
 {
-    // Append-only, immutable log: no updated_at, no delete path at all.
+    use MassPrunable;
+
+    // Append-only, immutable log: no updated_at. The database enforces it
+    // too — trg_audit_logs_no_update / trg_audit_logs_no_early_delete
+    // reject any UPDATE, and any DELETE of an entry younger than RETENTION.
     const UPDATED_AT = null;
+
+    /**
+     * How long entries are kept. model:prune (scheduled daily, see
+     * routes/console.php) removes anything older; the delete trigger
+     * refuses anything newer, whoever asks.
+     */
+    public const RETENTION_MONTHS = 12;
 
     protected $fillable = [
         'user_id',
@@ -18,6 +31,16 @@ class AuditLog extends Model
         'description',
         'ip_address',
     ];
+
+    /**
+     * Entries past retention. One extra day of margin over the trigger's
+     * cutoff, so a few hours of clock difference between PHP and the
+     * database can never make a scheduled prune trip the trigger.
+     */
+    public function prunable(): Builder
+    {
+        return static::where('created_at', '<', now()->subMonths(self::RETENTION_MONTHS)->subDay());
+    }
 
     /**
      * withTrashed: a log entry must still correctly attribute its action to
@@ -56,5 +79,33 @@ class AuditLog extends Model
         }
 
         return $query->where('module', $module);
+    }
+
+    public function scopeAction(Builder $query, ?string $action): Builder
+    {
+        if (! $action) {
+            return $query;
+        }
+
+        return $query->where('action', $action);
+    }
+
+    public function scopeByUser(Builder $query, int|string|null $userId): Builder
+    {
+        if (! $userId) {
+            return $query;
+        }
+
+        return $query->where('user_id', $userId);
+    }
+
+    /**
+     * Inclusive date range, by calendar day. Either end may be left open.
+     */
+    public function scopeBetweenDates(Builder $query, ?Carbon $from, ?Carbon $to): Builder
+    {
+        return $query
+            ->when($from, fn (Builder $q) => $q->where('created_at', '>=', $from->copy()->startOfDay()))
+            ->when($to, fn (Builder $q) => $q->where('created_at', '<=', $to->copy()->endOfDay()));
     }
 }

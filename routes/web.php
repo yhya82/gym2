@@ -66,11 +66,12 @@ Route::middleware(['auth', 'verified', 'password.compliant'])->group(function ()
         Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
         Route::resource('expenses', ExpenseController::class)->except(['create', 'edit', 'show']);
         Route::resource('expense-categories', ExpenseCategoryController::class)->except(['index', 'create', 'edit', 'show']);
-        Route::resource('users', UserController::class)->except(['create', 'edit', 'show']);
+        Route::resource('users', UserController::class)->except(['create', 'edit']);
         Route::get('settings', [SettingController::class, 'show'])->name('settings.show');
         Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
         Route::view('settings/security', 'settings.security')->name('settings.security');
         Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+        Route::get('audit-logs/export', [AuditLogController::class, 'export'])->name('audit-logs.export');
     });
 });
 

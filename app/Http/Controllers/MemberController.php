@@ -8,6 +8,7 @@ use App\Http\Requests\StoreMemberRequest;
 use App\Http\Requests\UpdateMemberRequest;
 use App\Models\Member;
 use App\Models\Plan;
+use App\Services\AuditLogger;
 use App\Services\MemberRegistrationService;
 use App\Services\PhoneNumberService;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -44,7 +45,7 @@ class MemberController extends Controller
      * pagination — the export always covers every row matching the current
      * filter, not just the page currently on screen.
      */
-    public function export(): StreamedResponse
+    public function export(AuditLogger $audit): StreamedResponse
     {
         $this->authorize('export', Member::class);
 
@@ -59,6 +60,15 @@ class MemberController extends Controller
             ->when($status === 'archived', fn ($q) => $q->archived())
             ->latest()
             ->get();
+
+        // One file holds every matching member's name and phone number, so
+        // who took it, and how much, belongs in the audit trail.
+        $audit->log('export', 'members', sprintf(
+            'Exported %d member(s) to CSV (filter: %s%s).',
+            $members->count(),
+            $status,
+            $search ? ", search \"{$search}\"" : '',
+        ));
 
         $filename = 'members-'.now()->toDateString().'.csv';
 

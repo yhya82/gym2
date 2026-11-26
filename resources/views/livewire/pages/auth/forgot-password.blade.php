@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\User;
+use App\Services\AuditLogger;
 use Illuminate\Support\Facades\Password;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
@@ -23,6 +25,17 @@ new #[Layout('layouts.guest')] class extends Component
         $status = Password::sendResetLink(
             $this->only('email')
         );
+
+        // Only for a real account: audit_logs needs a user to attribute the
+        // entry to, and a request for an unknown email reveals nothing.
+        if ($status === Password::RESET_LINK_SENT && $user = User::where('email', $this->email)->first()) {
+            app(AuditLogger::class)->log(
+                'password-reset-requested',
+                'security',
+                "A password reset link was requested for {$user->email}.",
+                $user->id,
+            );
+        }
 
         if ($status != Password::RESET_LINK_SENT) {
             $this->addError('email', __($status));

@@ -3,7 +3,6 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -26,9 +25,11 @@ class EnsurePasswordIsCompliant
         }
 
         // A Livewire update has no page to redirect; refusing it is enough,
-        // since the next full page load lands on the change screen.
+        // since the next full page load lands on the change screen. A plain
+        // 403 rather than AuthorizationException: this isn't a permission
+        // denial, and logging it as one only cluttered the audit trail.
         if ($request->hasHeader('X-Livewire')) {
-            throw new AuthorizationException('You must set a new password before continuing.');
+            abort(403, 'You must set a new password before continuing.');
         }
 
         return redirect()->route('password.change-required');

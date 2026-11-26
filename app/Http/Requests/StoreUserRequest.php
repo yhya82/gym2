@@ -12,6 +12,16 @@ class StoreUserRequest extends FormRequest
     /**
      * Determine if the user is authorized to make this request.
      */
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Enter a name.',
+            'email.required' => 'Enter an email address.',
+            'phone_number.required' => 'Enter a phone number.',
+            'password.confirmed' => "The passwords don't match.",
+        ];
+    }
+
     public function authorize(): bool
     {
         return $this->user()->can('create', User::class);
@@ -40,7 +50,7 @@ class StoreUserRequest extends FormRequest
             // split StoreMemberRequest uses for its own phone_number.
             'phone_number' => ['required', 'string', 'max:20'],
             // Security Center > Password Policy (see AppServiceProvider).
-            'password' => ['required', 'string', Password::defaults()],
+            'password' => ['required', 'string', 'confirmed', Password::defaults()],
             'role' => ['required', 'in:admin,receptionist'],
         ];
     }

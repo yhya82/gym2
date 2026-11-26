@@ -4,7 +4,9 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\UserRole;
+use App\Observers\UserObserver;
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,6 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+#[ObservedBy([UserObserver::class])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -138,8 +141,10 @@ class User extends Authenticatable
 
             // Every path that sets a password validates it against the
             // current policy first, so a new password always satisfies a
-            // pending "must change" requirement.
-            if ($user->must_change_password) {
+            // pending "must change" requirement — unless the same save set
+            // that requirement on purpose (an Admin resetting someone's
+            // password, ChangePasswordModal).
+            if ($user->must_change_password && ! $user->wasChanged('must_change_password')) {
                 $user->forceFill(['must_change_password' => false])->saveQuietly();
             }
         });

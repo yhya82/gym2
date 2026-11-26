@@ -2,10 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Rules\NotInPasswordHistory;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 
 class UpdateUserRequest extends FormRequest
 {
@@ -17,10 +15,25 @@ class UpdateUserRequest extends FormRequest
         return $this->user()->can('update', $this->route('user'));
     }
 
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Enter a name.',
+            'email.required' => 'Enter an email address.',
+            'phone_number.required' => 'Enter a phone number.',
+        ];
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
-     * Password is optional here — omitted means "leave unchanged."
+     * No password here: passwords only change through the Change password
+     * modal (App\Livewire\ChangePasswordModal), so editing someone's details
+     * can never change their password by accident.
+     *
+     * Role is "sometimes": the form disables the select when the role can't
+     * be changed (UserPolicy::changeRole), and a disabled field isn't
+     * submitted at all.
      *
      * @return array<string, mixed>
      */
@@ -33,11 +46,7 @@ class UpdateUserRequest extends FormRequest
                 Rule::unique('users', 'email')->whereNull('deleted_at')->ignore($this->route('user')),
             ],
             'phone_number' => ['required', 'string', 'max:20'],
-            // Security Center > Password Policy, plus password history:
-            // an Admin setting a user's password can't hand back one of
-            // that user's recent passwords either.
-            'password' => ['nullable', 'string', Password::defaults(), new NotInPasswordHistory($this->route('user'))],
-            'role' => ['required', 'in:admin,receptionist'],
+            'role' => ['sometimes', 'required', 'in:admin,receptionist'],
         ];
     }
 }

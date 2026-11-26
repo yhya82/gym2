@@ -15,10 +15,14 @@ class PaymentObserver
     // update or delete path for a Payment anywhere in the app.
     public function created(Payment $payment): void
     {
+        // withTrashed: the name must still resolve if the member is archived
+        // later, or was archived when this ran.
+        $name = $payment->member()->withTrashed()->value('full_name') ?? "member #{$payment->member_id}";
+
         $this->audit->log(
             'create',
             'payments',
-            "Recorded payment of {$payment->amount} for member #{$payment->member_id}."
+            "Recorded payment of {$payment->amount} for \"{$name}\"."
         );
     }
 }

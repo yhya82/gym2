@@ -18,9 +18,13 @@ class UserPolicy
         return $user->role === UserRole::Admin;
     }
 
+    /**
+     * A user's profile page: Admins can open anyone's (Users page); everyone
+     * else only their own (/profile).
+     */
     public function view(User $user, User $model): bool
     {
-        return $user->role === UserRole::Admin;
+        return $user->role === UserRole::Admin || $user->id === $model->id;
     }
 
     public function create(User $user): bool
@@ -61,6 +65,43 @@ class UserPolicy
     public function restore(User $user, User $model): bool
     {
         return $user->role === UserRole::Admin;
+    }
+
+    /**
+     * Changing someone's role, on top of update(). Same reasoning as
+     * delete(): demoting the last Admin locks everyone out of user, plan and
+     * settings management just as surely as deactivating them would. And no
+     * Admin changes their own role, so an Admin can't accidentally demote
+     * themselves out of the page they're using.
+     */
+    public function changeRole(User $user, User $model): Response
+    {
+        if ($user->role !== UserRole::Admin) {
+            return Response::deny('Only an Admin can change roles.');
+        }
+
+        if ($user->id === $model->id) {
+            return Response::deny('You cannot change your own role.');
+        }
+
+        if ($model->role === UserRole::Admin && User::where('role', UserRole::Admin)->count() <= 1) {
+            return Response::deny('This is the only Admin account. Make another user an Admin first.');
+        }
+
+        return Response::allow();
+    }
+
+    /**
+     * Everyone may change their own password (Profile). Only an Admin may
+     * change anyone else's (Users page).
+     */
+    public function changePassword(User $user, User $model): Response
+    {
+        if ($user->id === $model->id || $user->role === UserRole::Admin) {
+            return Response::allow();
+        }
+
+        return Response::deny("Only an Admin can change another user's password.");
     }
 
     // No forceDelete: business data is never permanently removed (§11) —

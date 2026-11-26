@@ -8,6 +8,7 @@ use App\Models\LoginAttempt;
 use App\Models\User;
 use App\Services\AuditLogger;
 use App\Services\SecurityScore;
+use App\Support\AuditActions;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -293,19 +294,7 @@ class SecurityCenter extends Component
      */
     public function eventBadge(string $action): array
     {
-        return match ($action) {
-            'login' => ['Login', 'bg-green-100 text-green-800 dark:bg-green-500/10 dark:text-green-400'],
-            'logout' => ['Logout', 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'],
-            'failed-login' => ['Failed login', 'bg-red-100 text-red-800 dark:bg-red-500/10 dark:text-red-400'],
-            'account-locked' => ['Locked', 'bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-400'],
-            'account-unlocked' => ['Unlocked', 'bg-indigo-100 text-indigo-800 dark:bg-indigo-500/10 dark:text-indigo-300'],
-            'permission-denied' => ['Denied', 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'],
-            'update-policy' => ['Policy', 'bg-indigo-100 text-indigo-800 dark:bg-indigo-500/10 dark:text-indigo-300'],
-            'session-revoked', 'sessions-revoked' => ['Session', 'bg-indigo-100 text-indigo-800 dark:bg-indigo-500/10 dark:text-indigo-300'],
-            'password-change-required' => ['Must change', 'bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-400'],
-            'password-changed' => ['Password', 'bg-green-100 text-green-800 dark:bg-green-500/10 dark:text-green-400'],
-            default => [Str::headline($action), 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'],
-        };
+        return [AuditActions::label($action), AuditActions::badgeClasses($action)];
     }
 
     public function render(): View

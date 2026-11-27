@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Member;
+use App\Support\MoneyRules;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreMemberRequest extends FormRequest
@@ -30,7 +31,7 @@ class StoreMemberRequest extends FormRequest
             'phone_number' => ['required', 'string', 'max:20'],
             'plan_id' => ['required', 'integer', 'exists:plans,id'],
             'start_date' => ['required', 'date'],
-            'payment_amount' => ['required', 'numeric', 'gt:0'],
+            'payment_amount' => MoneyRules::positive(),
         ];
     }
 }

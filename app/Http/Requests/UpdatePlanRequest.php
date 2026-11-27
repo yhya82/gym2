@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Support\MoneyRules;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -27,8 +28,8 @@ class UpdatePlanRequest extends FormRequest
                 'required', 'string', 'max:100',
                 Rule::unique('plans', 'plan_name')->whereNull('deleted_at')->ignore($this->route('plan')),
             ],
-            'duration_days' => ['required', 'integer', 'min:1'],
-            'price' => ['required', 'numeric', 'min:0'],
+            'duration_days' => ['required', 'integer', 'min:1', 'max:3650'],
+            'price' => MoneyRules::nonNegative(),
         ];
     }
 }

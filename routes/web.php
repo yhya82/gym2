@@ -53,10 +53,17 @@ Route::middleware(['auth', 'verified', 'password.compliant'])->group(function ()
     // record payments (§3.1/§3.2 — both roles can create/edit/renew members
     // and record payments; only archiving/restoring/viewing the Archived
     // filter is Admin-only, gated per-action via MemberPolicy).
-    Route::resource('members', MemberController::class)->except(['edit']);
+    // withTrashed(['show']): an archived member's page still opens (for
+    // anyone allowed to see archived members — checked in the controller),
+    // since archiving is meant to preserve their history (§11).
+    Route::resource('members', MemberController::class)->except(['edit'])->withTrashed(['show']);
     Route::post('members/{member}/restore', [MemberController::class, 'restore'])->name('members.restore');
     Route::post('members/{member}/renew', [SubscriptionController::class, 'renew'])->name('members.renew');
     Route::post('payments', [PaymentController::class, 'store'])->name('payments.store');
+
+    // Everyone's own notifications (NotificationsPage only ever reads the
+    // signed-in user's), so no role restriction.
+    Route::view('notifications', 'notifications.index')->name('notifications.index');
 
     // Admin-only: plan management, financial reports, user management, and
     // settings are all restricted at the routing layer (§3.2 Restricted

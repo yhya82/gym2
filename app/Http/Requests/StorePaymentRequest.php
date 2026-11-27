@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Payment;
+use App\Support\MoneyRules;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StorePaymentRequest extends FormRequest
@@ -29,8 +30,8 @@ class StorePaymentRequest extends FormRequest
     {
         return [
             'subscription_id' => ['required', 'integer', 'exists:subscriptions,id'],
-            'amount' => ['required', 'numeric', 'gt:0'],
-            'payment_date' => ['nullable', 'date'],
+            'amount' => MoneyRules::positive(),
+            'payment_date' => ['nullable', 'date', 'before_or_equal:today'],
         ];
     }
 }

@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\User;
 use App\Services\AuditLogger;
 use App\Support\AuditActions;
+use App\Support\CsvCell;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -74,7 +75,8 @@ class AuditLogController extends Controller
 
             $query->chunk(500, function ($logs) use ($handle) {
                 foreach ($logs as $log) {
-                    fputcsv($handle, array_map([$this, 'neutraliseFormula'], [
+                    // Descriptions include text staff typed — see CsvCell.
+                    fputcsv($handle, array_map(CsvCell::text(...), [
                         $log->created_at->format('Y-m-d H:i:s'),
                         $log->user?->name.($log->user?->trashed() ? ' (deactivated)' : ''),
                         AuditActions::moduleLabel($log->module),
@@ -90,19 +92,6 @@ class AuditLogController extends Controller
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
-    }
-
-    /**
-     * Descriptions include text staff typed (member names, plan names, a
-     * login email), so a value starting with = + - @ would run as a formula
-     * when the CSV is opened in Excel or Sheets. A leading apostrophe makes
-     * it display as plain text instead.
-     */
-    private function neutraliseFormula(?string $value): string
-    {
-        $value = (string) $value;
-
-        return preg_match('/^[=+\-@\t\r]/', $value) ? "'".$value : $value;
     }
 
     /**

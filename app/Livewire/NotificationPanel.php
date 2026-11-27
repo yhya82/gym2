@@ -4,10 +4,21 @@ namespace App\Livewire;
 
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
+use Livewire\Attributes\Locked;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
+/**
+ * The bell in the top bar: a short dropdown of the newest unread
+ * notifications. Everything else — read history, filters — lives on the full
+ * Notifications page (App\Livewire\NotificationsPage), linked at the bottom.
+ */
 class NotificationPanel extends Component
 {
+    /** How many unread notifications the dropdown shows before "+ N more". */
+    public const SHOWN = 5;
+
+    #[Locked]
     public int $userId;
 
     public function mount(): void
@@ -28,13 +39,27 @@ class NotificationPanel extends Component
     }
 
     /**
+     * The Notifications page marks things read too; refresh the badge and
+     * list when it does.
+     */
+    #[On('notifications-updated')]
+    public function refreshFromPage(): void
+    {
+        // Re-render only.
+    }
+
+    /**
      * Only unread notifications — marking one read (markAsRead) is meant to
      * remove it from this list, not just re-style it in place, so the query
      * itself is the mechanism rather than client-side hide/show state.
      */
     public function getNotificationsProperty(): Collection
     {
-        return auth()->user()->appNotifications()->where('read_status', false)->latest()->limit(10)->get();
+        return auth()->user()->appNotifications()
+            ->where('read_status', false)
+            ->latest('id')
+            ->limit(self::SHOWN)
+            ->get();
     }
 
     public function getUnreadCountProperty(): int
@@ -50,11 +75,13 @@ class NotificationPanel extends Component
     public function markAsRead(int $notificationId): void
     {
         auth()->user()->appNotifications()->whereKey($notificationId)->update(['read_status' => true]);
+        $this->dispatch('notifications-updated');
     }
 
     public function markAllRead(): void
     {
         auth()->user()->appNotifications()->where('read_status', false)->update(['read_status' => true]);
+        $this->dispatch('notifications-updated');
     }
 
     public function render(): View

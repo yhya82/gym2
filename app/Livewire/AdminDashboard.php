@@ -2,9 +2,11 @@
 
 namespace App\Livewire;
 
+use App\Enums\MembershipStatus;
 use App\Models\Expense;
 use App\Models\Member;
 use App\Models\Payment;
+use App\Models\Subscription;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -80,7 +82,7 @@ class AdminDashboard extends Component
     {
         $today = now()->startOfDay();
 
-        return match ($this->revenuePeriod) {
+        $card = match ($this->revenuePeriod) {
             'daily' => $this->compare(
                 __('Today · :date', ['date' => $today->format('D j M')]),
                 $this->revenueBetween($today, $today),
@@ -99,6 +101,46 @@ class AdminDashboard extends Component
             'total' => $this->totalRevenueCard($today),
             default => $this->monthlyRevenueCard($today),
         };
+
+        // Payments and average payment for the very same window as the
+        // headline figure, so the three numbers always agree.
+        [$from, $to] = match ($this->revenuePeriod) {
+            'daily' => [$today, $today],
+            'yearly' => [$today->copy()->startOfYear(), $today],
+            'total' => [null, null],
+            default => [$today->copy()->startOfMonth(), $today],
+        };
+
+        $payments = Payment::query()
+            ->when($from, fn ($q) => $q->whereBetween('payment_date', [$from->toDateString(), $to->toDateString()]))
+            ->count();
+
+        return [
+            ...$card,
+            'payments' => $payments,
+            'average' => $payments > 0 ? round($card['value'] / $payments, 2) : 0.0,
+        ];
+    }
+
+    /**
+     * Money still owed right now: the unpaid balance on every active
+     * subscription of a current (not archived) member. Not tied to the
+     * card's period filter — it's a "today" figure.
+     *
+     * @return array{amount: float, members: int}
+     */
+    #[Computed]
+    public function outstanding(): array
+    {
+        $owing = Subscription::query()
+            ->where('status', MembershipStatus::Active)
+            ->where('balance', '>', 0)
+            ->whereHas('member'); // excludes archived (soft-deleted) members
+
+        return [
+            'amount' => (float) (clone $owing)->sum('balance'),
+            'members' => (clone $owing)->distinct()->count('member_id'),
+        ];
     }
 
     private function monthlyRevenueCard(Carbon $today): array

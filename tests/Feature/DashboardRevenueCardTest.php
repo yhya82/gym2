@@ -152,12 +152,83 @@ class DashboardRevenueCardTest extends TestCase
             ->test(AdminDashboard::class)
             ->assertSee('Revenue')
             ->assertSee(['Daily', 'Monthly', 'Yearly', 'Total'])
-            ->assertSee('Total expenses · all time')
+            ->assertSee(['Total expenses', 'All time'])
             ->assertSee('389,750.00')
             ->call('setRevenuePeriod', 'daily')
             ->assertSet('revenuePeriod', 'daily')
             ->assertSee('−6.3%')
             ->assertSee('vs yesterday');
+    }
+
+    // ------------------------------------------------------ quick stats panel
+
+    public function test_payments_and_average_cover_the_same_window_as_the_figure(): void
+    {
+        $this->pay('2026-11-03', '1000.00');
+        $this->pay('2026-11-20', '500.00');
+        $this->pay('2026-11-27', '300.00');
+        $this->pay('2026-10-15', '9999.00');   // last month — not in "this month"
+
+        $monthly = $this->card('monthly');
+        $this->assertSame(3, $monthly['payments']);
+        $this->assertSame(600.0, $monthly['average']);
+
+        $daily = $this->card('daily');
+        $this->assertSame(1, $daily['payments']);
+        $this->assertSame(300.0, $daily['average']);
+
+        $total = $this->card('total');
+        $this->assertSame(4, $total['payments']);
+        $this->assertSame(2949.75, $total['average']);
+    }
+
+    public function test_average_is_zero_when_there_are_no_payments(): void
+    {
+        $card = $this->card('daily');
+
+        $this->assertSame(0, $card['payments']);
+        $this->assertSame(0.0, $card['average']);
+    }
+
+    public function test_outstanding_counts_only_unpaid_balances_of_current_members(): void
+    {
+        // setUp's member owes 10,000,000 on an active subscription; replace
+        // it with realistic, controlled cases.
+        $this->subscription->forceFill(['balance' => 0, 'amount_paid' => $this->subscription->plan_price])->save();
+
+        $owes = function (string $phone, string $balance, MembershipStatus $status = MembershipStatus::Active): Member {
+            $member = Member::factory()->create(['phone_number' => $phone]);
+            $member->subscriptions()->create([
+                'plan_id' => Plan::factory()->create(['price' => '1000.00'])->id,
+                'start_date' => '2026-11-01', 'expiry_date' => '2026-12-01',
+                'plan_price' => '1000.00', 'amount_paid' => bcsub('1000.00', $balance, 2), 'balance' => $balance,
+                'status' => $status,
+            ]);
+
+            return $member;
+        };
+
+        $owes('+220835190101', '400.00');                           // counts
+        $owes('+220835190102', '250.00');                           // counts
+        $owes('+220835190103', '0.00');                             // paid in full
+        $owes('+220835190104', '700.00', MembershipStatus::Expired); // lapsed, not "owed" on a current membership
+        $owes('+220835190105', '900.00')->delete();                 // archived
+
+        $outstanding = Livewire::actingAs($this->admin)->test(AdminDashboard::class)->instance()->outstanding;
+
+        $this->assertSame(['amount' => 650.0, 'members' => 2], $outstanding);
+    }
+
+    public function test_the_stats_panel_renders_with_the_card(): void
+    {
+        $this->pay('2026-11-27', '300.00');
+
+        Livewire::actingAs($this->admin)
+            ->test(AdminDashboard::class)
+            ->call('setRevenuePeriod', 'daily')
+            ->assertSee(['Outstanding', 'Payments', 'Average payment', 'per payment', 'today'])
+            ->assertSee('Live · updates as payments are recorded')
+            ->assertSee('Live · updates as expenses are logged');
     }
 
     // ------------------------------------------------ the chart follows along

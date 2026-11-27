@@ -88,7 +88,13 @@ class ChangePasswordModal extends Component
 
     private function resolveTarget(?int $userId): User
     {
-        $target = $userId ? User::findOrFail($userId) : Auth::user();
+        // Your own password goes through the SAME object the auth guard
+        // holds: AuthenticateSession re-reads that object's password hash at
+        // the end of the request to keep this session valid. A separately
+        // loaded copy would leave the guard on the old hash and sign you out.
+        $target = ($userId === null || $userId === Auth::id())
+            ? Auth::user()
+            : User::findOrFail($userId);
 
         Gate::authorize('changePassword', $target);
 

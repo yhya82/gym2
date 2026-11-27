@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Support\MoneyRules;
 use App\Exceptions\PaymentExceedsBalanceException;
 use App\Models\Member;
 use App\Models\Plan;
@@ -83,7 +84,7 @@ class RenewalModal extends Component
     $validated = $this->validate([
         'plan_id' => ['required', 'integer', 'exists:plans,id'],
         'start_date' => ['required', 'date'],
-        'payment_amount' => ['required', 'numeric', 'gt:0'],
+        'payment_amount' => MoneyRules::positive(),
     ]);
 
     $plan = Plan::findOrFail($validated['plan_id']);

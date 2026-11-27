@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Support\MoneyRules;
 use Illuminate\Foundation\Http\FormRequest;
 
 class RenewSubscriptionRequest extends FormRequest
@@ -24,7 +25,7 @@ class RenewSubscriptionRequest extends FormRequest
         return [
             'plan_id' => ['required', 'integer', 'exists:plans,id'],
             'start_date' => ['required', 'date'],
-            'payment_amount' => ['required', 'numeric', 'gt:0'],
+            'payment_amount' => MoneyRules::positive(),
         ];
     }
 }

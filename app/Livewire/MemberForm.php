@@ -9,6 +9,7 @@ use App\Models\Member;
 use App\Models\Plan;
 use App\Services\MemberRegistrationService;
 use App\Services\PhoneNumberService;
+use App\Support\MoneyRules;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
@@ -131,11 +132,15 @@ class MemberForm extends Component
                     // start date without this would leave expiry_date
                     // silently disagreeing with the assigned plan length.
                     $expiryDate = $startDate->clone()->addDays($subscription->plan->duration_days);
-                    // Same cutoff ExpireMemberships uses (expiry_date <= today)
-                    // — otherwise a backdated correction leaves status stale
-                    // until the next cron run instead of reflecting reality
-                    // immediately.
-                    $status = $expiryDate->isPast() ? MembershipStatus::Expired : MembershipStatus::Active;
+                    // A correction can END a membership (the new dates are
+                    // already over — same cutoff ExpireMemberships uses), but
+                    // it can never REVIVE one: moving an expired member's start
+                    // date forward used to flip them back to Active with no
+                    // renewal and no payment. Reactivation only happens
+                    // through Renew, which takes a payment.
+                    $status = $expiryDate->isPast()
+                        ? MembershipStatus::Expired
+                        : $subscription->status;
 
                     $subscription->update([
                         'start_date' => $startDate,
@@ -171,7 +176,7 @@ class MemberForm extends Component
             'phone_number' => ['required', 'string', 'max:20'],
             'plan_id' => ['required', 'integer', 'exists:plans,id'],
             'start_date' => ['required', 'date'],
-            'payment_amount' => ['required', 'numeric', 'gt:0'],
+            'payment_amount' => MoneyRules::positive(),
         ]);
 
         $plan = Plan::findOrFail($validated['plan_id']);

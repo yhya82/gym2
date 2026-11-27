@@ -28,15 +28,15 @@ class PaymentService
      * plan_price before either one's write is visible to the other.
      *
      * @throws PaymentExceedsBalanceException if the amount would push
-     *                                         amount_paid past plan_price,
-     *                                         whether caught here or by the
-     *                                         trigger.
+     *                                        amount_paid past plan_price,
+     *                                        whether caught here or by the
+     *                                        trigger.
      * @throws SubscriptionNotActiveException if the subscription's period
-     *                                         has already ended — a top-up
-     *                                         belongs to the current period
-     *                                         only; a lapsed member must be
-     *                                         renewed instead (creates its
-     *                                         own new, active subscription).
+     *                                        has already ended — a top-up
+     *                                        belongs to the current period
+     *                                        only; a lapsed member must be
+     *                                        renewed instead (creates its
+     *                                        own new, active subscription).
      */
     public function record(
         Subscription $subscription,
@@ -44,6 +44,14 @@ class PaymentService
         User $staff,
         ?Carbon $paymentDate = null,
     ): Payment {
+        // Plain 2-decimal amounts only. Every form validates this already
+        // (MoneyRules); this backstop is for any future caller that doesn't —
+        // bcmath can't read "1e2", and a third decimal would be truncated
+        // here but rounded by the database, so the ledger would drift.
+        if (! preg_match('/^\d{1,8}(\.\d{1,2})?$/', $amount)) {
+            throw new \InvalidArgumentException('Payment amount must be a plain amount with at most two decimal places.');
+        }
+
         if (bccomp($amount, '0', 2) <= 0) {
             throw new \InvalidArgumentException('Payment amount must be greater than zero.');
         }
@@ -54,6 +62,15 @@ class PaymentService
             if ($locked->status !== MembershipStatus::Active) {
                 throw new SubscriptionNotActiveException(
                     'This subscription has expired — renew the membership instead of recording a payment against it.'
+                );
+            }
+
+            // An archived member's last subscription can still read
+            // "active" — archiving doesn't touch it — so this is checked on
+            // its own. Money is only taken from current members.
+            if ($locked->member()->withTrashed()->value('deleted_at') !== null) {
+                throw new SubscriptionNotActiveException(
+                    'This member is archived — restore them before recording a payment.'
                 );
             }
 

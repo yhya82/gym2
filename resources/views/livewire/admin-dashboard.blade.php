@@ -9,6 +9,9 @@
     @php
         $revenue = $this->revenueCard;
         $periodLabels = ['daily' => __('Daily'), 'monthly' => __('Monthly'), 'yearly' => __('Yearly'), 'total' => __('Total')];
+        // The "Payments" stat's note — which window the count covers.
+        $periodNotes = ['daily' => __('today'), 'monthly' => __('this month'), 'yearly' => __('this year'), 'total' => __('all time')];
+        $outstanding = $this->outstanding;
         $pillTone = match ($revenue['tone']) {
             'good' => 'bg-green-100 text-green-800 dark:bg-green-500/15 dark:text-green-300',
             'bad' => 'bg-red-100 text-red-800 dark:bg-red-500/15 dark:text-red-300',
@@ -19,9 +22,12 @@
             : ($revenue['pct'] > 0 ? '+' : ($revenue['pct'] < 0 ? '−' : '')).number_format(abs($revenue['pct']), 1).'%';
     @endphp
 
-    {{-- Revenue (2/3) + Expenses (1/3) on large screens; stacked below that. --}}
+    {{-- Revenue (2/3) + Expenses (1/3) on large screens; stacked below that.
+         Both cards: period badge on top, the figure centred, a live line at
+         the bottom. The Revenue card adds a stats panel on the right, which
+         drops underneath on narrow screens. --}}
     <div class="grid gap-5 lg:grid-cols-3">
-        <section aria-labelledby="revenue-heading" class="lg:col-span-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+        <section aria-labelledby="revenue-heading" class="lg:col-span-2 flex flex-col rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
             <div class="flex flex-wrap items-center justify-between gap-3 px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-700">
                 <div class="flex items-center gap-3">
                     <span aria-hidden="true" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
@@ -50,27 +56,71 @@
                 </div>
             </div>
 
-            <div class="px-5 sm:px-6 py-6 space-y-3" wire:loading.class="opacity-60" wire:target="setRevenuePeriod">
-                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ $revenue['label'] }}</p>
-                <p class="flex flex-wrap items-baseline gap-x-2">
-                    <span class="text-base font-semibold text-gray-500 dark:text-gray-400">{{ $currency }}</span>
-                    <span class="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100 tabular-nums break-all">{{ number_format($revenue['value'], 2) }}</span>
-                </p>
-                <div class="flex flex-wrap items-center gap-2.5">
-                    <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm font-bold tabular-nums {{ $pillTone }}">
-                        @if ($revenue['direction'] === 'up')
-                            <svg aria-hidden="true" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>
-                        @elseif ($revenue['direction'] === 'down')
-                            <svg aria-hidden="true" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10"/><path d="M17 8v9H8"/></svg>
-                        @endif
-                        {{ $pillText }}
+            <div class="flex flex-1 flex-wrap items-stretch gap-x-8 gap-y-5 p-5 sm:p-6" wire:loading.class="opacity-60" wire:target="setRevenuePeriod">
+                {{-- Left: period, figure + pill, live line --}}
+                <div class="flex min-w-0 flex-1 basis-64 flex-col gap-3.5">
+                    <span class="inline-flex items-center gap-2 self-start rounded-full bg-gray-100 dark:bg-gray-700 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:text-gray-200">
+                        <x-icon name="calendar" class="h-3.5 w-3.5" aria-hidden="true" />
+                        {{ $revenue['label'] }}
                     </span>
-                    <span class="text-sm text-gray-500 dark:text-gray-400">{{ $revenue['note'] }}</span>
+
+                    <div class="flex flex-1 flex-col justify-center gap-1.5">
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('Revenue') }}</p>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <p class="inline-flex items-baseline gap-1.5">
+                                <span class="text-sm font-semibold text-gray-500 dark:text-gray-400">{{ $currency }}</span>
+                                <span class="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100 tabular-nums break-all">{{ number_format($revenue['value'], 2) }}</span>
+                            </p>
+                            <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm font-bold tabular-nums {{ $pillTone }}">
+                                @if ($revenue['direction'] === 'up')
+                                    <svg aria-hidden="true" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>
+                                @elseif ($revenue['direction'] === 'down')
+                                    <svg aria-hidden="true" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10"/><path d="M17 8v9H8"/></svg>
+                                @endif
+                                {{ $pillText }}
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ $revenue['note'] }}</p>
+                    </div>
+
+                    <p class="flex items-center gap-2 border-t border-dashed border-gray-200 dark:border-gray-700 pt-3 text-xs text-gray-500 dark:text-gray-400">
+                        <span aria-hidden="true" class="h-2 w-2 rounded-full bg-green-500 ring-[3px] ring-green-100 dark:ring-green-500/20"></span>
+                        {{ __('Live · updates as payments are recorded') }}
+                    </p>
                 </div>
+
+                {{-- Right: quick stats --}}
+                <dl class="flex flex-1 basis-60 flex-col self-center rounded-xl bg-gray-50 dark:bg-gray-900/40 sm:max-w-sm">
+                    @foreach ([
+                        ['label' => __('Outstanding'), 'value' => $currency.' '.number_format($outstanding['amount'], 2),
+                         'note' => trans_choice(':count member owes|:count members owe', $outstanding['members']),
+                         'icon' => 'clock', 'tile' => 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400',
+                         'noteClass' => $outstanding['amount'] > 0 ? 'font-semibold text-amber-800 dark:text-amber-300' : 'text-gray-500 dark:text-gray-400'],
+                        ['label' => __('Payments'), 'value' => number_format($revenue['payments']),
+                         'note' => $periodNotes[$revenuePeriod],
+                         'icon' => 'check-circle', 'tile' => 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
+                         'noteClass' => 'text-gray-500 dark:text-gray-400'],
+                        ['label' => __('Average payment'), 'value' => $currency.' '.number_format($revenue['average'], 2),
+                         'note' => __('per payment'),
+                         'icon' => 'revenue', 'tile' => 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+                         'noteClass' => 'text-gray-500 dark:text-gray-400'],
+                    ] as $i => $stat)
+                        <div @class(['flex items-center gap-3 px-4 py-3', 'border-t border-gray-200 dark:border-gray-700' => $i > 0])>
+                            <span aria-hidden="true" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg {{ $stat['tile'] }}">
+                                <x-icon :name="$stat['icon']" class="h-4 w-4" />
+                            </span>
+                            <div class="min-w-0 flex-1">
+                                <dt class="text-xs text-gray-500 dark:text-gray-400">{{ $stat['label'] }}</dt>
+                                <dd class="mt-0.5 text-base font-bold text-gray-900 dark:text-gray-100 tabular-nums">{{ $stat['value'] }}</dd>
+                            </div>
+                            <span class="whitespace-nowrap text-right text-xs {{ $stat['noteClass'] }}">{{ $stat['note'] }}</span>
+                        </div>
+                    @endforeach
+                </dl>
             </div>
         </section>
 
-        <section aria-labelledby="expenses-heading" class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+        <section aria-labelledby="expenses-heading" class="flex flex-col rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
             <div class="flex items-center gap-3 px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-700">
                 <span aria-hidden="true" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400">
                     <x-icon name="expenses" class="h-5 w-5" />
@@ -80,11 +130,21 @@
                     <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Money spent') }}</p>
                 </div>
             </div>
-            <div class="px-5 sm:px-6 py-6 space-y-3">
-                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Total expenses · all time') }}</p>
-                <p class="flex flex-wrap items-baseline gap-x-2">
-                    <span class="text-base font-semibold text-gray-500 dark:text-gray-400">{{ $currency }}</span>
-                    <span class="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100 tabular-nums break-all">{{ number_format((float) ($stats['total_expenses'] ?? 0), 2) }}</span>
+            <div class="flex flex-1 flex-col gap-3.5 p-5 sm:p-6">
+                <span class="inline-flex items-center gap-2 self-start rounded-full bg-gray-100 dark:bg-gray-700 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:text-gray-200">
+                    <x-icon name="calendar" class="h-3.5 w-3.5" aria-hidden="true" />
+                    {{ __('All time') }}
+                </span>
+                <div class="flex flex-1 flex-col justify-center gap-1.5">
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('Total expenses') }}</p>
+                    <p class="inline-flex items-baseline gap-1.5">
+                        <span class="text-sm font-semibold text-gray-500 dark:text-gray-400">{{ $currency }}</span>
+                        <span class="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100 tabular-nums break-all">{{ number_format((float) ($stats['total_expenses'] ?? 0), 2) }}</span>
+                    </p>
+                </div>
+                <p class="flex items-center gap-2 border-t border-dashed border-gray-200 dark:border-gray-700 pt-3 text-xs text-gray-500 dark:text-gray-400">
+                    <span aria-hidden="true" class="h-2 w-2 rounded-full bg-green-500 ring-[3px] ring-green-100 dark:ring-green-500/20"></span>
+                    {{ __('Live · updates as expenses are logged') }}
                 </p>
             </div>
         </section>

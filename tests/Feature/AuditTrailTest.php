@@ -113,6 +113,10 @@ class AuditTrailTest extends TestCase
             ->set('name', 'Fatou Jallow')
             ->call('save');
 
+        // A real request loads the signed-in user fresh; mirror that so the
+        // password step sees the name the profile step just saved.
+        $this->actingAs($user->fresh());
+
         Livewire::test(ChangePasswordModal::class)
             ->call('open')
             ->set('password', 'another-password')

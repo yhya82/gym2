@@ -51,6 +51,15 @@
                         {{ __('Renew') }}
                     </button>
                 </div>
+            @else
+                @can('restore', $member)
+                    <form method="POST" action="{{ route('members.restore', $member->id) }}">
+                        @csrf
+                        <button type="submit" class="px-3 py-2 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500">
+                            {{ __('Restore member') }}
+                        </button>
+                    </form>
+                @endcan
             @endunless
         </div>
 

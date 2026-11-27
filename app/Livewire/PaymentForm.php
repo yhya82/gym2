@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Support\MoneyRules;
 use App\Exceptions\PaymentExceedsBalanceException;
 use App\Exceptions\SubscriptionNotActiveException;
 use App\Models\Member;
@@ -45,7 +46,7 @@ class PaymentForm extends Component
             return;
         }
 
-        $this->validate(['amount' => ['required', 'numeric', 'gt:0']]);
+        $this->validate(['amount' => MoneyRules::positive()]);
 
         try {
             $payments->record($subscription, (string) $this->amount, auth()->user());

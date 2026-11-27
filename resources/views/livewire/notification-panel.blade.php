@@ -50,5 +50,20 @@
                 <p class="px-4 py-6 text-sm text-center text-gray-400 dark:text-gray-500">{{ __('No unread notifications.') }}</p>
             @endforelse
         </div>
+
+        {{-- Only the newest few are listed here; the rest are a click away. --}}
+        @php $more = $this->unreadCount - $this->notifications->count(); @endphp
+        <div class="border-t border-gray-100 dark:border-gray-700 px-4 py-2.5 flex items-center justify-between gap-3 text-xs">
+            @if ($more > 0)
+                <a href="{{ route('notifications.index', ['filter' => 'unread']) }}" wire:navigate class="font-medium text-gray-600 dark:text-gray-300 hover:underline">
+                    {{ trans_choice('+ :count more unread|+ :count more unread', $more) }}
+                </a>
+            @else
+                <span></span>
+            @endif
+            <a href="{{ route('notifications.index') }}" wire:navigate class="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
+                {{ __('View all notifications') }} →
+            </a>
+        </div>
     </div>
 </div>

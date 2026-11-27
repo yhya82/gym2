@@ -3,11 +3,13 @@
 use App\Http\Middleware\ApplySessionTimeout;
 use App\Http\Middleware\EnsurePasswordIsCompliant;
 use App\Http\Middleware\EnsureUserHasRole;
+use App\Http\Middleware\SecurityHeaders;
 use App\Services\AuditLogger;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
 
@@ -27,6 +29,13 @@ return Application::configure(basePath: dirname(__DIR__))
         // Ahead of StartSession — see ApplySessionTimeout.
         $middleware->web(prepend: [
             ApplySessionTimeout::class,
+        ], append: [
+            // Ends every other session (and "remember me" login) the moment
+            // a user's password changes — by themselves or by an Admin — so
+            // a stolen session doesn't outlive the password it was opened
+            // with. The session that made the change stays signed in.
+            AuthenticateSession::class,
+            SecurityHeaders::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

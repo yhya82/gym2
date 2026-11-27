@@ -11,6 +11,7 @@ use App\Models\Plan;
 use App\Services\AuditLogger;
 use App\Services\MemberRegistrationService;
 use App\Services\PhoneNumberService;
+use App\Support\CsvCell;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -81,13 +82,15 @@ class MemberController extends Controller
                 $subscription = $member->currentSubscription;
 
                 fputcsv($handle, [
-                    $member->full_name,
+                    // Typed by staff — see CsvCell for why it's escaped.
+                    CsvCell::text($member->full_name),
                     // A leading "+" reads as a formula to Excel/Sheets when
                     // opening a CSV — wrapping it in ="..." forces it to
                     // display as the literal text instead of a warning or a
-                    // mangled value.
+                    // mangled value. (Safe: the app builds this one itself
+                    // from a validated E.164 number.)
                     '="'.$member->phone_number_formatted.'"',
-                    $subscription?->plan?->plan_name ?? '',
+                    CsvCell::text($subscription?->plan?->plan_name ?? ''),
                     $subscription?->plan_price ?? '',
                     $subscription?->amount_paid ?? '',
                     $member->trashed() ? 'Archived' : ucfirst($member->status->value),
@@ -134,6 +137,12 @@ class MemberController extends Controller
     public function show(Member $member): View
     {
         $this->authorize('view', $member);
+
+        // The route resolves archived members too; only those allowed to
+        // see archived members (Admins) may open one.
+        if ($member->trashed()) {
+            $this->authorize('viewArchived', Member::class);
+        }
 
         $member->load(['subscriptions.plan', 'payments.receivedBy', 'createdBy']);
 

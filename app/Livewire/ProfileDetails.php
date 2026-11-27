@@ -105,9 +105,11 @@ class ProfileDetails extends Component
 
         $user->fill($validated);
 
-        // Kept from Breeze for your own profile: a new email address has to
-        // be verified again. An Admin correcting someone's address doesn't
-        // lock that person out.
+        // Kept from Breeze: a changed address is marked unverified. Nothing
+        // enforces verification today — User doesn't implement MustVerifyEmail,
+        // so the "verified" route middleware lets everyone through — which is
+        // why the form no longer tells users they'll have to verify. Keeping
+        // the column accurate means turning verification on later just works.
         if ($this->isSelf && $user->isDirty('email')) {
             $user->email_verified_at = null;
         }

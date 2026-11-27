@@ -7,6 +7,7 @@ use App\Models\ApplicationSetting;
 use App\Services\PhoneNumberService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -60,7 +61,11 @@ class SettingsPage extends Component
 
         $validated = $this->validate([
             'application_name' => ['required', 'string', 'max:255'],
-            'logoUpload' => ['nullable', 'image', 'max:2048'],
+            // Raster images only, by extension AND content: 'image' alone
+            // would also accept bmp/gif, and SVG is excluded either way (it
+            // can carry script). 2 MB and 2000px are far above what a
+            // sidebar logo needs.
+            'logoUpload' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:2048', 'dimensions:min_width=32,min_height=32,max_width=2000,max_height=2000'],
             'location' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
             // Format/validity (libphonenumber) is enforced by PhoneNumberService
@@ -69,6 +74,11 @@ class SettingsPage extends Component
             'currency' => ['required', 'string', 'max:3'],
             'timezone' => ['required', 'string', 'timezone'],
             'default_theme' => ['required', 'in:light,dark'],
+        ], [
+            'logoUpload.image' => __('The logo must be an image.'),
+            'logoUpload.mimes' => __('The logo must be a PNG, JPG or WebP image.'),
+            'logoUpload.max' => __('The logo must be 2 MB or smaller.'),
+            'logoUpload.dimensions' => __('The logo must be between 32×32 and 2000×2000 pixels.'),
         ]);
 
         $data = collect($validated)->except('logoUpload')->all();
@@ -88,8 +98,14 @@ class SettingsPage extends Component
             }
         }
 
+        $previousLogo = $settings->logo;
+
         if ($this->logoUpload) {
+            $path = false;
+
             try {
+                // logos/<random 40-char name>.<extension from the detected
+                // content type> — never the uploader's own filename.
                 $path = $this->logoUpload->store('logos', 's3');
 
                 // Deliberately not exists()/HeadObject: that needs read
@@ -103,26 +119,38 @@ class SettingsPage extends Component
                 // 'throw' => false), but that's the tradeoff for not
                 // blocking every real upload on a permission this app can't
                 // fix from code.
-                Storage::disk('s3')->temporaryUrl($path, now()->addMinutes(10));
-                $uploaded = true;
+                //
+                // store() itself returns false instead of throwing when the
+                // disk has 'throw' => false — that has to be checked
+                // explicitly, or `false` would be saved as the logo path.
+                if ($path !== false) {
+                    Storage::disk('s3')->temporaryUrl($path, now()->addMinutes(10));
+                }
             } catch (\Throwable $e) {
-                $uploaded = false;
+                // Usually configuration (missing AWS_* keys or AWS_ENDPOINT
+                // for R2) — logged so it can be diagnosed; the Admin just gets
+                // a plain message.
+                Log::error('Logo upload failed: '.$e->getMessage(), ['exception' => $e]);
+                $path = false;
             }
 
-            if (! $uploaded) {
-                $this->addError('logoUpload', __('The logo failed to upload — please try again.'));
+            if ($path === false) {
+                $this->addError('logoUpload', __("The logo couldn't be saved. Try again, and if it keeps failing, check the file storage settings."));
 
                 return;
-            }
-
-            if ($settings->logo) {
-                Storage::disk('s3')->delete($settings->logo);
             }
 
             $data['logo'] = $path;
         }
 
         $settings->update($data);
+
+        // Only once the new path is saved: deleting first would leave the
+        // settings pointing at a file that no longer exists if the save
+        // failed.
+        if ($this->logoUpload && $previousLogo && $previousLogo !== $data['logo']) {
+            Storage::disk('s3')->delete($previousLogo);
+        }
 
         $this->logo = $settings->fresh()->logo;
         $this->logoUpload = null;
@@ -135,11 +163,14 @@ class SettingsPage extends Component
         $settings = ApplicationSetting::current();
         Gate::authorize('update', $settings);
 
-        if ($settings->logo) {
-            Storage::disk('s3')->delete($settings->logo);
-        }
+        $previousLogo = $settings->logo;
 
         $settings->update(['logo' => null]);
+
+        if ($previousLogo) {
+            Storage::disk('s3')->delete($previousLogo);
+        }
+
         $this->logo = null;
         $this->logoUpload = null;
     }

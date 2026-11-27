@@ -76,9 +76,6 @@
                         <label for="pd-email" class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Email') }} <span class="text-red-600 dark:text-red-400" aria-hidden="true">*</span></label>
                         <input id="pd-email" required aria-required="true" type="email" wire:model="email" autocomplete="email" class="{{ $inputClass }}">
                         @error('email') <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
-                        @if ($isSelf)
-                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Changing your email means verifying the new address.') }}</p>
-                        @endif
                     </div>
                     <div>
                         <label for="pd-phone" class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Phone number') }} <span class="text-red-600 dark:text-red-400" aria-hidden="true">*</span></label>

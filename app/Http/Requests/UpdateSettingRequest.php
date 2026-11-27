@@ -24,7 +24,6 @@ class UpdateSettingRequest extends FormRequest
     {
         return [
             'application_name' => ['required', 'string', 'max:255'],
-            'logo' => ['nullable', 'string', 'max:255'],
             'location' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
             // Format/validity (libphonenumber) is enforced by PhoneNumberService

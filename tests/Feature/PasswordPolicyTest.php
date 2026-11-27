@@ -188,7 +188,7 @@ class PasswordPolicyTest extends TestCase
         $this->assertDatabaseHas('audit_logs', ['user_id' => $user->id, 'action' => 'account-locked', 'module' => 'security']);
 
         // Even the right password is refused while locked.
-        $this->attemptLogin('staff@example.com', 'password')->assertHasErrors('form.email');
+        $this->attemptLogin('staff@example.com', 'password')->assertHasErrors('form.locked');
         $this->assertGuest();
     }
 
@@ -212,10 +212,12 @@ class PasswordPolicyTest extends TestCase
         $this->attemptLogin('nobody@example.com', 'x');
 
         $this->attemptLogin('nobody@example.com', 'x')
-            ->assertHasErrors('form.email');
+            ->assertHasErrors('form.locked');
 
-        // The third attempt never reached Auth::attempt, so only two were recorded.
-        $this->assertSame(2, LoginAttempt::where('email', 'nobody@example.com')->count());
+        // The third attempt was refused before the password check, but it's
+        // still recorded as a failed attempt (LoginForm::recordBlockedAttempt).
+        $this->assertSame(3, LoginAttempt::where('email', 'nobody@example.com')->count());
+        $this->assertSame(0, LoginAttempt::where('successful', true)->count());
     }
 
     public function test_every_login_attempt_is_recorded(): void

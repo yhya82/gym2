@@ -43,7 +43,12 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="h-full font-sans antialiased bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-        <div class="flex h-full">
+        {{-- x-data makes this an Alpine root. Alpine only initialises
+             directives inside one, and the sidebar/topnav controls (collapse,
+             theme toggle, mobile menu) have no x-data of their own — so on a
+             full page load or reload they used to stay dead until a
+             wire:navigate happened to re-initialise the page. --}}
+        <div class="flex h-full" x-data>
             @include('layouts.sidebar')
 
             <div class="flex-1 flex flex-col min-w-0">

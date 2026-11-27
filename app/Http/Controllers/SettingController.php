@@ -25,9 +25,11 @@ class SettingController extends Controller
 
         // An empty string, not null, is what a cleared field submits as —
         // the column's CHECK constraint only auto-passes on a real NULL.
-        if ($data['phone'] === '') {
-            $data['phone'] = null;
-        } elseif ($data['phone']) {
+        // A field left out of the request entirely means "no phone" too —
+        // reading $data['phone'] unguarded was a 500 in that case.
+        $data['phone'] = ($data['phone'] ?? '') === '' ? null : $data['phone'];
+
+        if ($data['phone']) {
             try {
                 $data['phone'] = $phoneNumbers->canonicalize($data['phone']);
             } catch (InvalidPhoneNumberException $e) {

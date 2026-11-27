@@ -5,3 +5,22 @@
 [x-cloak] {
     display: none !important;
 }
+
+/* A short horizontal shake for a field (or alert) that just failed —
+   login page. Plays once each time the element is rendered fresh. */
+@keyframes field-shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+}
+
+.animate-shake {
+    animation: field-shake 0.4s ease-in-out;
+}
+
+/* The red border and message still show; only the motion is dropped. */
+@media (prefers-reduced-motion: reduce) {
+    .animate-shake {
+        animation: none;
+    }
+}

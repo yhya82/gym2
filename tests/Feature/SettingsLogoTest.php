@@ -10,6 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class SettingsLogoTest extends TestCase
@@ -18,7 +19,7 @@ class SettingsLogoTest extends TestCase
 
     public function test_admin_can_upload_a_logo(): void
     {
-        Storage::fake('s3');
+        Storage::fake('media');
         $admin = User::factory()->create(['role' => UserRole::Admin]);
 
         Livewire::actingAs($admin)
@@ -29,12 +30,12 @@ class SettingsLogoTest extends TestCase
 
         $path = ApplicationSetting::current()->logo;
         $this->assertNotNull($path);
-        Storage::disk('s3')->assertExists($path);
+        Storage::disk('media')->assertExists($path);
     }
 
     public function test_uploading_a_new_logo_deletes_the_previous_file(): void
     {
-        Storage::fake('s3');
+        Storage::fake('media');
         $admin = User::factory()->create(['role' => UserRole::Admin]);
 
         Livewire::actingAs($admin)
@@ -43,7 +44,7 @@ class SettingsLogoTest extends TestCase
             ->call('save');
 
         $firstPath = ApplicationSetting::current()->logo;
-        Storage::disk('s3')->assertExists($firstPath);
+        Storage::disk('media')->assertExists($firstPath);
 
         Livewire::actingAs($admin)
             ->test(SettingsPage::class)
@@ -52,13 +53,13 @@ class SettingsLogoTest extends TestCase
 
         $secondPath = ApplicationSetting::current()->logo;
         $this->assertNotSame($firstPath, $secondPath);
-        Storage::disk('s3')->assertMissing($firstPath);
-        Storage::disk('s3')->assertExists($secondPath);
+        Storage::disk('media')->assertMissing($firstPath);
+        Storage::disk('media')->assertExists($secondPath);
     }
 
     public function test_a_non_image_upload_is_rejected(): void
     {
-        Storage::fake('s3');
+        Storage::fake('media');
         $admin = User::factory()->create(['role' => UserRole::Admin]);
 
         Livewire::actingAs($admin)
@@ -72,7 +73,7 @@ class SettingsLogoTest extends TestCase
 
     public function test_admin_can_remove_the_logo(): void
     {
-        Storage::fake('s3');
+        Storage::fake('media');
         $admin = User::factory()->create(['role' => UserRole::Admin]);
 
         Livewire::actingAs($admin)
@@ -87,12 +88,12 @@ class SettingsLogoTest extends TestCase
             ->call('removeLogo');
 
         $this->assertNull(ApplicationSetting::current()->logo);
-        Storage::disk('s3')->assertMissing($path);
+        Storage::disk('media')->assertMissing($path);
     }
 
     public function test_the_logo_is_stored_under_a_random_name_not_the_uploaders(): void
     {
-        Storage::fake('s3');
+        Storage::fake('media');
         $admin = User::factory()->create(['role' => UserRole::Admin]);
 
         Livewire::actingAs($admin)
@@ -118,10 +119,10 @@ class SettingsLogoTest extends TestCase
         ];
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('rejectedUploads')]
+    #[DataProvider('rejectedUploads')]
     public function test_invalid_logo_uploads_are_rejected_with_a_clear_message(UploadedFile $file, string $message): void
     {
-        Storage::fake('s3');
+        Storage::fake('media');
         $admin = User::factory()->create(['role' => UserRole::Admin]);
 
         Livewire::actingAs($admin)
@@ -135,7 +136,7 @@ class SettingsLogoTest extends TestCase
 
     public function test_a_storage_failure_keeps_the_existing_logo_and_says_so(): void
     {
-        Storage::fake('s3');
+        Storage::fake('media');
         $admin = User::factory()->create(['role' => UserRole::Admin]);
 
         Livewire::actingAs($admin)
@@ -144,9 +145,9 @@ class SettingsLogoTest extends TestCase
             ->call('save');
         $existing = ApplicationSetting::current()->logo;
 
-        // Now make storage unusable — the real disk, with no credentials.
-        Storage::forgetDisk('s3');
-        config(['filesystems.disks.s3.key' => null, 'filesystems.disks.s3.secret' => null, 'filesystems.disks.s3.bucket' => null]);
+        // Now make storage unusable: production's R2 disk, with no credentials.
+        Storage::forgetDisk('media');
+        config(['filesystems.disks.media' => [...config('filesystems.disks.s3'), 'key' => null, 'secret' => null, 'bucket' => null]]);
 
         Livewire::actingAs($admin)
             ->test(SettingsPage::class)
@@ -170,6 +171,32 @@ class SettingsLogoTest extends TestCase
         ])->assertRedirect();
 
         $this->assertNull(ApplicationSetting::current()->logo);
+    }
+
+    public function test_without_a_bucket_the_media_disk_is_local_storage_with_relative_urls(): void
+    {
+        // phpunit runs with no AWS_BUCKET, like a laptop or CI.
+        $this->assertSame('local', config('filesystems.disks.media.driver'));
+        $this->assertSame('/storage', config('filesystems.disks.media.url'));
+
+        $this->assertSame('/storage/logos/abc.png', ApplicationSetting::urlFor('logos/abc.png'));
+    }
+
+    public function test_on_r2_the_logo_url_is_a_short_lived_signed_url(): void
+    {
+        Storage::forgetDisk('media');
+        config(['filesystems.disks.media' => [
+            ...config('filesystems.disks.s3'),
+            'key' => 'test-key', 'secret' => 'test-secret', 'bucket' => 'gym2-media',
+            'region' => 'auto', 'endpoint' => 'https://example-account.r2.cloudflarestorage.com',
+        ]]);
+
+        $url = ApplicationSetting::urlFor('logos/abc.png');
+
+        $this->assertStringContainsString('logos/abc.png', $url);
+        $this->assertStringContainsString('X-Amz-Signature=', $url);
+        // ~10 minutes (599 or 600 depending on when the clock ticks).
+        $this->assertMatchesRegularExpression('/X-Amz-Expires=(59\d|600)\b/', $url);
     }
 
     public function test_temporary_uploads_are_kept_off_the_public_disk(): void

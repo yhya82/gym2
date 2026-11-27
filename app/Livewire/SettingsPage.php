@@ -104,30 +104,29 @@ class SettingsPage extends Component
             $path = false;
 
             try {
-                // logos/<random 40-char name>.<extension from the detected
-                // content type> — never the uploader's own filename.
-                $path = $this->logoUpload->store('logos', 's3');
+                // The "media" disk is R2 in production and local storage
+                // elsewhere (config/filesystems.php) — this code doesn't care
+                // which. Stored as logos/<random 40-char name>.<extension from
+                // the detected content type>, never the uploader's filename.
+                $path = $this->logoUpload->store('logos', 'media');
 
-                // Deliberately not exists()/HeadObject: that needs read
-                // permission on the R2 token, which is currently broken
-                // (confirmed via a live 401 on GetObject) even though writes
-                // succeed. temporaryUrl() only signs a request locally — it
-                // never contacts R2 — so it still catches a genuine signing/
-                // credentials failure without depending on the same broken
-                // read path. Weaker than the original check (it can't catch
-                // a silently failed write, since the 's3' disk has
-                // 'throw' => false), but that's the tradeoff for not
-                // blocking every real upload on a permission this app can't
-                // fix from code.
+                // store() returns false instead of throwing when the disk has
+                // 'throw' => false — checked explicitly, or `false` would be
+                // saved as the logo path.
                 //
-                // store() itself returns false instead of throwing when the
-                // disk has 'throw' => false — that has to be checked
-                // explicitly, or `false` would be saved as the logo path.
-                if ($path !== false) {
-                    Storage::disk('s3')->temporaryUrl($path, now()->addMinutes(10));
+                // On R2, also sign a URL as a credentials check. Deliberately
+                // not exists()/HeadObject: that needs read permission on the
+                // R2 token, which has been broken (a live 401 on GetObject)
+                // even while writes succeed. Signing happens locally and never
+                // contacts R2, so it catches bad credentials without depending
+                // on that read path.
+                $disk = Storage::disk('media');
+
+                if ($path !== false && $disk->providesTemporaryUrls()) {
+                    $disk->temporaryUrl($path, now()->addMinutes(10));
                 }
             } catch (\Throwable $e) {
-                // Usually configuration (missing AWS_* keys or AWS_ENDPOINT
+                // Usually configuration (on R2: missing AWS_* keys or AWS_ENDPOINT
                 // for R2) — logged so it can be diagnosed; the Admin just gets
                 // a plain message.
                 Log::error('Logo upload failed: '.$e->getMessage(), ['exception' => $e]);
@@ -149,7 +148,7 @@ class SettingsPage extends Component
         // settings pointing at a file that no longer exists if the save
         // failed.
         if ($this->logoUpload && $previousLogo && $previousLogo !== $data['logo']) {
-            Storage::disk('s3')->delete($previousLogo);
+            Storage::disk('media')->delete($previousLogo);
         }
 
         $this->logo = $settings->fresh()->logo;
@@ -168,7 +167,7 @@ class SettingsPage extends Component
         $settings->update(['logo' => null]);
 
         if ($previousLogo) {
-            Storage::disk('s3')->delete($previousLogo);
+            Storage::disk('media')->delete($previousLogo);
         }
 
         $this->logo = null;

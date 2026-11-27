@@ -95,8 +95,8 @@ class LoginPageTest extends TestCase
             ->assertSeeHtml('id="password-error"')
             ->assertDontSeeHtml('id="email-error"')
             // Both fields start out invalid (red + shake) for bad credentials.
-            ->assertSeeHtml('x-data="{ invalid: true }"')
-            ->assertSeeHtml('x-data="{ invalid: true, show: false }"');
+            ->assertSeeHtml('x-data="{ invalid: true, userTyped')
+            ->assertSeeHtml('x-data="{ invalid: true, show: false, userTyped');
     }
 
     public function test_the_password_field_has_a_show_hide_toggle(): void

@@ -21,11 +21,17 @@ has, independent of anything in the code itself.
    Backups are the only copy of audit entries older than 12 months once
    they've been pruned — keep that in mind when choosing how long backups
    themselves are retained.
-2. **`storage/app/public`** — currently just the Settings > Logo upload
-   (`app/Livewire/SettingsPage.php`). Not in git, not in the database, so a
-   DB-only backup would silently lose it. Everything else the app writes to
-   disk (`storage/logs`, `storage/framework/*`) is disposable and
-   deliberately not included.
+2. **`storage/app/public`** — uploaded media (the Settings > Logo) *when the
+   "media" disk is local*, i.e. any environment without an R2 bucket
+   configured (see `config/filesystems.php`). Not in git, not in the
+   database, so a DB-only backup would silently lose it. Everything else the
+   app writes to disk (`storage/logs`, `storage/framework/*`) is disposable
+   and deliberately not included.
+
+   **In production the logo is in the R2 bucket instead**, which this script
+   does not back up. R2 keeps the object durably, but if you want a copy
+   outside Cloudflare too, sync the bucket's `logos/` prefix separately
+   (e.g. `rclone sync r2:<bucket>/logos /var/backups/gym2/media/logos`).
 
 Not covered here: the application code itself (it's in git) and `.env`
 (secrets — back this up separately, out of band, if at all).

@@ -10,7 +10,7 @@
          as the theme toggle below — the sidebar is a sibling include, not
          an ancestor of this header, so a local x-data here couldn't reach
          it anyway. -->
-    <div class="flex items-center gap-2 lg:hidden">
+    <div class="flex min-w-0 flex-1 items-center gap-2 lg:hidden">
         <button @click.stop="$store.sidebar.mobileOpen = true" class="p-2 -ml-2 text-gray-500 dark:text-gray-400">
             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -33,7 +33,7 @@
         <x-icon name="chevron-left" class="h-4 w-4 transition-transform sidebar-collapsed:rotate-180" aria-hidden="true" />
     </button>
 
-    <div class="flex items-center gap-3">
+    <div class="flex shrink-0 items-center gap-1 sm:gap-3">
         <!-- Theme toggle — reads/writes the global Alpine store (window.js),
              not a local x-data, so it stays correct across wire:navigate. -->
         <button
@@ -53,8 +53,10 @@
 
     <x-dropdown align="right" width="48">
         <x-slot name="trigger">
-            <button class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200 px-2 py-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
-                <span>{{ auth()->user()->name }}</span>
+            <button aria-label="{{ __('Account menu for :name', ['name' => auth()->user()->name]) }}" class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200 px-2 py-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
+                {{-- Name from sm up; on phones the initials stand in, so the bar fits. --}}
+                <span class="hidden sm:inline">{{ auth()->user()->name }}</span>
+                <span aria-hidden="true" class="sm:hidden flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-xs font-semibold">{{ \Illuminate\Support\Str::of(auth()->user()->name)->explode(' ')->filter()->take(2)->map(fn ($p) => mb_strtoupper(mb_substr($p, 0, 1)))->implode('') }}</span>
                 <svg class="h-4 w-4 fill-current" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                 </svg>

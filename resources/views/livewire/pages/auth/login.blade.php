@@ -76,15 +76,21 @@ new #[Layout('layouts.guest-split')] class extends Component
     @enderror
 
     <form wire:submit="login" class="space-y-4" novalidate>
+        {{-- Error messages stay until the next attempt. Only the red border
+             clears, and only when a person types: userTyped() ignores the
+             input events browsers fire when autofill / a password manager
+             refills the field — those used to wipe the message within a
+             few milliseconds, before anyone could read it. --}}
+
         {{-- Email --}}
         <div wire:key="email-field-{{ $failures }}"
-             x-data="{ invalid: @js((bool) $emailInvalid) }"
+             x-data="{ invalid: @js((bool) $emailInvalid), userTyped(e) { return e.isTrusted && !!e.inputType && e.inputType !== 'insertReplacementText' } }"
              x-init="@js($focus === 'email') && $nextTick(() => $refs.input.focus())">
             <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Email') }}</label>
             <input
                 x-ref="input"
                 wire:model="form.email"
-                x-on:input="invalid = false"
+                x-on:input="userTyped($event) && (invalid = false)"
                 id="email"
                 type="email"
                 name="email"
@@ -97,7 +103,7 @@ new #[Layout('layouts.guest-split')] class extends Component
                 x-bind:class="invalid ? @js($inputBad.' animate-shake') : @js($inputOk)"
             >
             @error('form.email')
-                <p id="email-error" x-show="invalid" role="alert" class="mt-1.5 flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400">
+                <p id="email-error" role="alert" class="mt-1.5 flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400">
                     <svg aria-hidden="true" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12.5"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                     {{ $message }}
                 </p>
@@ -106,14 +112,14 @@ new #[Layout('layouts.guest-split')] class extends Component
 
         {{-- Password, with show/hide --}}
         <div wire:key="password-field-{{ $failures }}"
-             x-data="{ invalid: @js((bool) $passwordInvalid), show: false }"
+             x-data="{ invalid: @js((bool) $passwordInvalid), show: false, userTyped(e) { return e.isTrusted && !!e.inputType && e.inputType !== 'insertReplacementText' } }"
              x-init="@js($focus === 'password') && $nextTick(() => $refs.input.focus())">
             <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Password') }}</label>
             <div class="relative mt-1">
                 <input
                     x-ref="input"
                     wire:model="form.password"
-                    x-on:input="invalid = false"
+                    x-on:input="userTyped($event) && (invalid = false)"
                     id="password"
                     x-bind:type="show ? 'text' : 'password'"
                     type="password"
@@ -141,7 +147,7 @@ new #[Layout('layouts.guest-split')] class extends Component
                 </button>
             </div>
             @if ($message = ($errors->first('form.password') ?: $credentialsError))
-                <p id="password-error" x-show="invalid" role="alert" class="mt-1.5 flex items-start gap-1.5 text-sm text-red-600 dark:text-red-400">
+                <p id="password-error" role="alert" class="mt-1.5 flex items-start gap-1.5 text-sm text-red-600 dark:text-red-400">
                     <svg aria-hidden="true" class="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12.5"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                     <span>{{ $message }}</span>
                 </p>

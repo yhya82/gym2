@@ -117,9 +117,13 @@ class ApplicationSetting extends Model
     }
 
     /**
-     * The logo always lives on the 's3' disk (SettingsPage stores it there
-     * directly), and that bucket is private — always a signed URL, not
-     * driven by FILESYSTEM_DISK.
+     * A browser-usable URL for a file on the "media" disk (see the note at
+     * the top of config/filesystems.php).
+     *
+     * Asks the disk what it can do rather than assuming: the R2 bucket is
+     * private, so it gets a short-lived signed URL; the local public disk
+     * can't sign, and doesn't need to, so it gets a plain /storage/... URL.
+     * That's what lets the same code run locally and in production.
      */
     public static function urlFor(?string $path): ?string
     {
@@ -128,11 +132,15 @@ class ApplicationSetting extends Model
         }
 
         try {
-            return Storage::disk('s3')->temporaryUrl($path, now()->addMinutes(10));
+            $disk = Storage::disk('media');
+
+            return $disk->providesTemporaryUrls()
+                ? $disk->temporaryUrl($path, now()->addMinutes(10))
+                : $disk->url($path);
         } catch (\Throwable $e) {
-            // Misconfigured/unreachable S3 (e.g. no AWS credentials locally)
-            // shouldn't take down every page that renders the logo — fall
-            // back to "no logo" so callers show the default icon instead.
+            // Misconfigured/unreachable storage shouldn't take down every
+            // page that renders the logo — fall back to "no logo" so callers
+            // show the default icon instead.
             return null;
         }
     }

@@ -32,18 +32,19 @@ class UserObserver
 
     public function created(User $user): void
     {
-        $this->audit->log('create', 'users', "Created user \"{$user->name}\" ({$user->email}) with role {$user->role?->value}.");
+        $this->audit->log('create', 'users', "Created user \"{$user->name}\" ({$user->email}) with role {$user->role?->value}.", subject: $user);
     }
 
     public function updated(User $user): void
     {
         $self = Auth::id() === $user->id;
 
+        $diff = $this->audit->changesFor($user, self::IGNORED);
         $changes = $this->audit->describeChanges($user, self::IGNORED);
 
         if ($changes !== '') {
             $who = $self ? "{$user->name} updated their own profile" : "Updated user \"{$user->name}\"";
-            $this->audit->log('update', 'users', "{$who} ({$changes}).");
+            $this->audit->log('update', 'users', "{$who} ({$changes}).", subject: $user, changes: $diff);
         }
 
         if ($user->wasChanged('password')) {
@@ -56,12 +57,12 @@ class UserObserver
      */
     public function deleted(User $user): void
     {
-        $this->audit->log('deactivate', 'users', "Deactivated user \"{$user->name}\" ({$user->email}).");
+        $this->audit->log('deactivate', 'users', "Deactivated user \"{$user->name}\" ({$user->email}).", subject: $user);
     }
 
     public function restored(User $user): void
     {
-        $this->audit->log('restore', 'users', "Reactivated user \"{$user->name}\" ({$user->email}).");
+        $this->audit->log('restore', 'users', "Reactivated user \"{$user->name}\" ({$user->email}).", subject: $user);
     }
 
     /**
@@ -76,13 +77,13 @@ class UserObserver
     private function logPasswordChange(User $user, bool $self): void
     {
         if (Auth::check() && ! $self) {
-            $this->audit->log('password-set', 'security', 'Set a new password for "'.$user->name.'".');
+            $this->audit->log('password-set', 'security', 'Set a new password for "'.$user->name.'".', subject: $user);
 
             return;
         }
 
         $how = Auth::check() ? 'changed their password' : 'reset their password using an emailed link';
 
-        $this->audit->log('password-changed', 'security', "{$user->name} {$how}.", $user->id);
+        $this->audit->log('password-changed', 'security', "{$user->name} {$how}.", $user->id, subject: $user);
     }
 }

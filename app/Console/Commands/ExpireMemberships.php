@@ -6,6 +6,7 @@ use App\Enums\MembershipStatus;
 use App\Events\MembershipExpired;
 use App\Models\Member;
 use App\Models\Subscription;
+use App\Services\AuditLogger;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -34,7 +35,7 @@ class ExpireMemberships extends Command
      * <= today match is therefore always a genuinely overdue membership,
      * never one superseded by a later renewal.
      */
-    public function handle(): int
+    public function handle(AuditLogger $audit): int
     {
         $today = now()->toDateString();
         $expiredCount = 0;
@@ -42,10 +43,10 @@ class ExpireMemberships extends Command
         Subscription::query()
             ->where('status', MembershipStatus::Active)
             ->where('expiry_date', '<=', $today)
-            ->with('member')
-            ->chunkById(100, function ($subscriptions) use (&$expiredCount) {
+            ->with(['member', 'plan'])
+            ->chunkById(100, function ($subscriptions) use (&$expiredCount, $audit) {
                 foreach ($subscriptions as $subscription) {
-                    DB::transaction(function () use ($subscription) {
+                    DB::transaction(function () use ($subscription, $audit) {
                         $subscription->update([
                             'status' => MembershipStatus::Expired,
                         ]);
@@ -58,6 +59,19 @@ class ExpireMemberships extends Command
                                 fn () => $subscription->member->update([
                                     'status' => MembershipStatus::Expired,
                                 ])
+                            );
+
+                            // Nobody did this, so it's attributed to System
+                            // (see AuditLogger::system). Inside the
+                            // transaction: no entry for an expiry that
+                            // rolled back.
+                            $plan = $subscription->plan?->plan_name;
+                            $audit->system(
+                                'expire',
+                                'members',
+                                "Membership of \"{$subscription->member->full_name}\"".($plan ? " ({$plan})" : '')." expired on {$subscription->expiry_date->toDateString()}.",
+                                subject: $subscription->member,
+                                changes: ['status' => ['old' => MembershipStatus::Active->value, 'new' => MembershipStatus::Expired->value]],
                             );
 
                             // afterCommit() guarantees this fires only once this

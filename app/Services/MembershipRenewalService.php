@@ -75,7 +75,8 @@ class MembershipRenewalService
             $this->audit->log(
                 'renew',
                 'members',
-                "Renewed \"{$member->full_name}\" on {$plan->plan_name} membership until {$subscription->expiry_date->toDateString()}."
+                "Renewed \"{$member->full_name}\" on {$plan->plan_name} membership until {$subscription->expiry_date->toDateString()}.",
+                subject: $member,
             );
 
             // afterCommit() guarantees this only fires once the *outermost*

@@ -22,7 +22,8 @@ class PaymentObserver
         $this->audit->log(
             'create',
             'payments',
-            "Recorded payment of {$payment->amount} for \"{$name}\"."
+            "Recorded payment of {$payment->amount} for \"{$name}\".",
+            subject: $payment,
         );
     }
 }

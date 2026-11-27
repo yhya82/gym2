@@ -159,7 +159,10 @@
     {{-- Follows the Revenue card's filter (per day / month / year, or a
          running total); the range menu in its top-right corner offers ranges
          that suit that period. --}}
-    <section aria-labelledby="chart-heading" class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-5">
+    {{-- Chart (3/4) + Quick Actions stacked beside it (1/4) on large
+         screens; Quick Actions drop underneath on smaller ones. --}}
+    <div class="grid gap-5 lg:grid-cols-4">
+    <section aria-labelledby="chart-heading" class="lg:col-span-3 min-w-0 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-5">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div>
                 <h2 id="chart-heading" class="text-sm font-semibold text-gray-800 dark:text-gray-100">{{ $this->chartTitle() }}</h2>
@@ -180,7 +183,7 @@
 
         {{-- Height set by the container (not a fixed canvas height) so the
              chart fills its width at every screen size. --}}
-        <div wire:ignore class="relative h-56 sm:h-72 w-full min-w-0"
+        <div wire:ignore class="relative h-48 sm:h-56 w-full min-w-0"
             x-data="revenueChart(@js($revenueSeries['labels']), @js($revenueSeries['values']))"
             x-init="init()"
         >
@@ -257,22 +260,33 @@
         @endscript
     </section>
 
-    <div>
-        <h2 class="text-sm font-medium text-gray-700 dark:text-gray-200 mb-3">{{ __('Quick Actions') }}</h2>
-        <div class="flex flex-wrap gap-3">
-            <button wire:click="$dispatch('create-member')" class="inline-flex items-center px-4 py-2 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500">
-                + {{ __('Add Member') }}
+    {{-- No card behind the buttons; plain white buttons, the colour lives in
+         each icon tile. On large screens they stretch to the chart's height. --}}
+    @php
+        $actionClass = 'flex flex-1 items-center gap-2.5 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3.5 text-sm font-semibold text-gray-800 dark:text-gray-100 hover:border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 transition-colors';
+        $tileClass = 'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg';
+    @endphp
+    <section aria-labelledby="quick-actions-heading" class="flex flex-col gap-2.5">
+        <h2 id="quick-actions-heading" class="text-sm font-semibold text-gray-800 dark:text-gray-100">{{ __('Quick Actions') }}</h2>
+        <div class="grid flex-1 gap-2 sm:grid-cols-2 lg:flex lg:flex-col">
+            <button type="button" wire:click="$dispatch('create-member')" class="{{ $actionClass }}">
+                <span aria-hidden="true" class="{{ $tileClass }} bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-300"><x-icon name="user-plus" class="h-4 w-4" /></span>
+                {{ __('Add Member') }}
             </button>
-            <a href="{{ route('members.index') }}" wire:navigate class="inline-flex items-center px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+            <a href="{{ route('members.index') }}" wire:navigate class="{{ $actionClass }}">
+                <span aria-hidden="true" class="{{ $tileClass }} bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"><x-icon name="refresh" class="h-4 w-4" /></span>
                 {{ __('Renew Member') }}
             </a>
-            <a href="{{ route('members.index') }}" wire:navigate class="inline-flex items-center px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+            <a href="{{ route('members.index') }}" wire:navigate class="{{ $actionClass }}">
+                <span aria-hidden="true" class="{{ $tileClass }} bg-sky-100 dark:bg-sky-500/15 text-sky-700 dark:text-sky-300"><x-icon name="payments" class="h-4 w-4" /></span>
                 {{ __('Record Payment') }}
             </a>
-            <a href="{{ route('plans.index', ['create' => 1]) }}" wire:navigate class="inline-flex items-center px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
-                + {{ __('Add Plan') }}
+            <a href="{{ route('plans.index', ['create' => 1]) }}" wire:navigate class="{{ $actionClass }}">
+                <span aria-hidden="true" class="{{ $tileClass }} bg-violet-100 dark:bg-violet-500/15 text-violet-700 dark:text-violet-300"><x-icon name="plus-list" class="h-4 w-4" /></span>
+                {{ __('Add Plan') }}
             </a>
         </div>
+    </section>
     </div>
 
     <livewire:member-form />

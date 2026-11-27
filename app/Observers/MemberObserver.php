@@ -20,7 +20,7 @@ class MemberObserver
      */
     public function created(Member $member): void
     {
-        $this->audit->log('create', 'members', "Registered member \"{$member->full_name}\".");
+        $this->audit->log('create', 'members', "Registered member \"{$member->full_name}\".", subject: $member);
     }
 
     /**
@@ -38,13 +38,14 @@ class MemberObserver
      */
     public function updated(Member $member): void
     {
+        $diff = $this->audit->changesFor($member);
         $changes = $this->audit->describeChanges($member);
 
         if ($changes === '') {
             return;
         }
 
-        $this->audit->log('update', 'members', "Updated member \"{$member->full_name}\" ({$changes}).");
+        $this->audit->log('update', 'members', "Updated member \"{$member->full_name}\" ({$changes}).", subject: $member, changes: $diff);
     }
 
     /**
@@ -52,7 +53,7 @@ class MemberObserver
      */
     public function deleted(Member $member): void
     {
-        $this->audit->log('archive', 'members', "Archived member \"{$member->full_name}\".");
+        $this->audit->log('archive', 'members', "Archived member \"{$member->full_name}\".", subject: $member);
     }
 
     /**
@@ -61,6 +62,6 @@ class MemberObserver
      */
     public function restored(Member $member): void
     {
-        $this->audit->log('restore', 'members', "Restored archived member \"{$member->full_name}\".");
+        $this->audit->log('restore', 'members', "Restored archived member \"{$member->full_name}\".", subject: $member);
     }
 }

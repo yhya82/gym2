@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\AuditLogger;
 use App\Services\SecurityScore;
 use App\Support\AuditActions;
+use App\Support\DeviceName;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -152,7 +153,7 @@ class SecurityCenter extends Component
             'locked_until' => null,
         ])->save();
 
-        app(AuditLogger::class)->log('account-unlocked', 'security', "Unlocked {$user->name}'s account.");
+        app(AuditLogger::class)->log('account-unlocked', 'security', "Unlocked {$user->name}'s account.", subject: $user);
     }
 
     /**
@@ -183,7 +184,8 @@ class SecurityCenter extends Component
         app(AuditLogger::class)->log(
             'session-revoked',
             'security',
-            "Revoked a session for {$user?->name} ({$this->describeDevice($row->user_agent)}, {$row->ip_address}).",
+            "Revoked a session for {$user?->name} (".DeviceName::from($row->user_agent).", {$row->ip_address}).",
+            subject: $user,
         );
     }
 
@@ -207,7 +209,7 @@ class SecurityCenter extends Component
 
         $user->forceFill(['remember_token' => Str::random(60)])->save();
 
-        app(AuditLogger::class)->log('sessions-revoked', 'security', "Signed {$user->name} out of all sessions.");
+        app(AuditLogger::class)->log('sessions-revoked', 'security', "Signed {$user->name} out of all sessions.", subject: $user);
     }
 
     // ------------------------------------------------------------- read side
@@ -262,7 +264,7 @@ class SecurityCenter extends Component
             ->map(fn ($row) => [
                 'key' => hash('sha256', $row->id),
                 'user' => $users[$row->user_id],
-                'device' => $this->describeDevice($row->user_agent),
+                'device' => DeviceName::from($row->user_agent),
                 'ip_address' => $row->ip_address,
                 'last_active' => Carbon::createFromTimestamp($row->last_activity),
                 'online' => $row->last_activity >= $onlineSince,
@@ -350,36 +352,5 @@ class SecurityCenter extends Component
             ->where('last_activity', '>=', $since)
             ->orderByDesc('last_activity')
             ->get(['id', 'user_id', 'ip_address', 'user_agent', 'last_activity']);
-    }
-
-    /**
-     * "Chrome · Windows" from a user-agent string. Deliberately rough — it
-     * only needs to help an Admin tell one session from another.
-     */
-    private function describeDevice(?string $userAgent): string
-    {
-        if (! $userAgent) {
-            return __('Unknown device');
-        }
-
-        $browser = match (true) {
-            str_contains($userAgent, 'Edg/') => 'Edge',
-            str_contains($userAgent, 'OPR/') => 'Opera',
-            str_contains($userAgent, 'Firefox/') => 'Firefox',
-            str_contains($userAgent, 'Chrome/') => 'Chrome',
-            str_contains($userAgent, 'Safari/') => 'Safari',
-            default => __('Browser'),
-        };
-
-        $os = match (true) {
-            str_contains($userAgent, 'Windows') => 'Windows',
-            str_contains($userAgent, 'iPhone'), str_contains($userAgent, 'iPad') => 'iOS',
-            str_contains($userAgent, 'Android') => 'Android',
-            str_contains($userAgent, 'Mac OS X') => 'macOS',
-            str_contains($userAgent, 'Linux') => 'Linux',
-            default => __('Unknown OS'),
-        };
-
-        return "{$browser} · {$os}";
     }
 }

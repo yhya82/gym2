@@ -172,6 +172,7 @@ class LoginForm extends Form
                 'security',
                 "{$user->name}'s password doesn't meet the current password policy; a new one is required.",
                 $user->id,
+                subject: $user,
             );
         }
     }
@@ -269,6 +270,7 @@ class LoginForm extends Form
                 'security',
                 "{$user->name} was locked out for {$policy['lockout_minutes']} minute(s) after {$attempts} failed login attempts.",
                 $user->id,
+                subject: $user,
             );
         }
 

@@ -32,6 +32,7 @@ class LogFailedLogin
                 'auth',
                 "Failed login attempt for {$event->user->email} from {$ip}.",
                 $event->user->id,
+                subject: $event->user,
             );
 
             return;

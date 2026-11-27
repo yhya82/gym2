@@ -46,6 +46,7 @@ final class AuditActions
         'archive' => ['Archived', self::AMBER],
         'restore' => ['Restored', self::GREEN],
         'renew' => ['Renewed', self::GREEN],
+        'expire' => ['Expired', self::AMBER],
         'deactivate' => ['Deactivated', self::RED],
         'export' => ['Exported', self::AMBER],
         'login' => ['Login', self::GREEN],
@@ -76,5 +77,31 @@ final class AuditActions
     public static function moduleLabel(string $module): string
     {
         return __(self::MODULES[$module] ?? Str::headline($module));
+    }
+
+    /** Column names whose plain-English form isn't just "underscores to spaces". */
+    private const FIELDS = [
+        'full_name' => 'Name',
+        'plan_name' => 'Plan name',
+        'duration_days' => 'Duration (days)',
+        'expense_category_id' => 'Category',
+        'category_id' => 'Category',
+        'plan_id' => 'Plan',
+        'application_name' => 'Gym name',
+        'password_min_length' => 'Minimum length',
+        'password_require_uppercase' => 'Require uppercase',
+        'password_require_lowercase' => 'Require lowercase',
+        'password_require_number' => 'Require number',
+        'password_require_symbol' => 'Require symbol',
+        'lockout_attempts' => 'Attempts before lockout',
+        'lockout_minutes' => 'Lockout (minutes)',
+        'password_history' => 'Password history',
+        'session_timeout_minutes' => 'Session timeout (minutes)',
+    ];
+
+    /** "amount_paid" → "Amount paid", for the Before/After table. */
+    public static function fieldLabel(string $field): string
+    {
+        return __(self::FIELDS[$field] ?? Str::ucfirst(str_replace('_', ' ', $field)));
     }
 }

@@ -18,22 +18,23 @@ class PlanObserver
 
     public function created(Plan $plan): void
     {
-        $this->audit->log('create', 'plans', "Created plan \"{$plan->plan_name}\" ({$plan->duration_days} days, {$plan->price}).");
+        $this->audit->log('create', 'plans', "Created plan \"{$plan->plan_name}\" ({$plan->duration_days} days, {$plan->price}).", subject: $plan);
     }
 
     public function updated(Plan $plan): void
     {
+        $diff = $this->audit->changesFor($plan);
         $changes = $this->audit->describeChanges($plan);
 
         if ($changes === '') {
             return;
         }
 
-        $this->audit->log('update', 'plans', "Updated plan \"{$plan->plan_name}\" ({$changes}).");
+        $this->audit->log('update', 'plans', "Updated plan \"{$plan->plan_name}\" ({$changes}).", subject: $plan, changes: $diff);
     }
 
     public function deleted(Plan $plan): void
     {
-        $this->audit->log('delete', 'plans', "Deleted plan \"{$plan->plan_name}\".");
+        $this->audit->log('delete', 'plans', "Deleted plan \"{$plan->plan_name}\".", subject: $plan);
     }
 }
